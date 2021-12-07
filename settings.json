@@ -1,19 +1,31 @@
 {
-  "workbench.iconTheme": "material-icon-theme",
-  "workbench.colorTheme": "Gruvbox Material Dark",
+  "workbench.colorTheme": "Nord",
+  "workbench.iconTheme": "eq-material-theme-icons",
+  "editor.suggestSelection": "first",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.matchBrackets": "always",
+  // "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "editor.tabSize": 2,
+  "editor.fontFamily": "Fantasque Sans Mono, CaskaydiaCove Nerd Font Mono, Consolas, 'Courier New', monospace",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": false
+  },
+  "terminal.integrated.fontFamily": "Fantasque Sans Mono, CaskaydiaCove Nerd Font Mono",
   "editor.smoothScrolling": true,
   "editor.cursorSmoothCaretAnimation": false,
   "vim.smartRelativeLine": true,
-  "editor.formatOnSave": true,
+  "editor.selectionHighlight": true,
+  "editor.cursorBlinking": "solid",
   "prettier.enable": true,
-  "editor.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
-  "terminal.integrated.fontFamily": "MesloLGS NF",
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "vim.enableNeovim": true,
+  // "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  //   "editor.formatOnSave": true
+  // },
+  // "vim.enableNeovim": true,
   "vim.highlightedyank.enable": true,
   "vim.highlightedyank.color": "rgba(100, 240, 170, 0.5)",
   "editor.cursorSurroundingLines": 8,
@@ -76,9 +88,22 @@
     {
       "before": ["<S-Tab>"],
       "commands": [":bprev"]
+    },
+    {
+      "before": ["<space>"],
+      "commands": ["vspacecode.space"]
     }
+    // {
+    //   "before": [","],
+    //   "commands": [
+    //     "vspacecode.space",
+    //     {
+    //       "command": "whichkey.triggerKey",
+    //       "args": "m"
+    //     }
+    //   ]
+    // }
   ],
-  "vim.leader": "<space>",
   "vim.handleKeys": {
     "<C-a>": true,
     "<C-f>": false
@@ -105,14 +130,47 @@
   "vim.statusBarColors.easymotionmode": "#007ACC",
   "vim.statusBarColors.easymotioninputmode": "#007ACC",
   "vim.statusBarColors.surroundinputmode": "#007ACC",
-  "window.zoomLevel": 0,
-  "workbench.colorCustomizations": {
-    "statusBar.background": "#8FBCBB",
-    "statusBar.noFolderBackground": "#8FBCBB",
-    "statusBar.debuggingBackground": "#8FBCBB",
-    "statusBar.foreground": "#000"
+  "glassit.alpha": 255,
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter-notebook"
   },
-  "vscode-neovim.neovimInitVimPaths.darwin": "/Users/adammabd/.config/nvim/init.vim",
-  "vscode-neovim.textDecorationsAtTop": true,
-  "vscode-neovim.neovimExecutablePaths.darwin": "/usr/local/bin/nvim"
+  "python.languageServer": "Pylance",
+  "python.insidersChannel": "weekly",
+  "vim.visualModeKeyBindingsNonRecursive": [
+    {
+      "before": ["<space>"],
+      "commands": ["vspacecode.space"]
+    }
+    // {
+    //   "before": [","],
+    //   "commands": [
+    //     "vspacecode.space",
+    //     {
+    //       "command": "whichkey.triggerKey",
+    //       "args": "m"
+    //     }
+    //   ]
+    // }
+  ],
+  "window.menuBarVisibility": "compact",
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#B48EAD",
+    "statusBar.noFolderBackground": "#B48EAD",
+    "statusBar.debuggingBackground": "#B48EAD",
+    "statusBar.foreground": "#000",
+    "statusBar.debuggingForeground": "#000"
+  },
+  "hediet.vscode-drawio.local-storage": "eyIuZHJhd2lvLWNvbmZpZyI6IntcImxhbmd1YWdlXCI6XCJcIixcImN1c3RvbUZvbnRzXCI6W10sXCJsaWJyYXJpZXNcIjpcImdlbmVyYWxcIixcImN1c3RvbUxpYnJhcmllc1wiOltcIkwuc2NyYXRjaHBhZFwiXSxcInBsdWdpbnNcIjpbXSxcInJlY2VudENvbG9yc1wiOltdLFwiZm9ybWF0V2lkdGhcIjpcIjI0MFwiLFwiY3JlYXRlVGFyZ2V0XCI6ZmFsc2UsXCJwYWdlRm9ybWF0XCI6e1wieFwiOjAsXCJ5XCI6MCxcIndpZHRoXCI6ODUwLFwiaGVpZ2h0XCI6MTEwMH0sXCJzZWFyY2hcIjp0cnVlLFwic2hvd1N0YXJ0U2NyZWVuXCI6dHJ1ZSxcImdyaWRDb2xvclwiOlwiI2QwZDBkMFwiLFwiZGFya0dyaWRDb2xvclwiOlwiIzZlNmU2ZVwiLFwiYXV0b3NhdmVcIjp0cnVlLFwicmVzaXplSW1hZ2VzXCI6bnVsbCxcIm9wZW5Db3VudGVyXCI6MCxcInZlcnNpb25cIjoxOCxcInVuaXRcIjoxLFwiaXNSdWxlck9uXCI6ZmFsc2UsXCJ1aVwiOlwiXCJ9In0=",
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "terminal.integrated.inheritEnv": false,
+  "terminal.integrated.shell.linux": "/usr/bin/zsh",
+  "editor.formatOnSave": true
 }
