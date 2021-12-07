@@ -1,0 +1,6 @@
+inoremap jk <Esc>
+inoremap kj <Esc>
+set sneak
+set easymotion
+set number relativenumber
+set so=8
