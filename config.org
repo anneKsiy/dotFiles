@@ -32,8 +32,12 @@
 * General Tweaks
 
 #+begin_src emacs-lisp
+(use-package exec-path-from-shell
+   :config (exec-path-from-shell-initialize))
 (setq scroll-margin 8)
 (setq scroll-conservatively 100)
+(setq visual-bell t)
+(setq ring-bell-function 'ignore)
 #+end_src
 
 * Emacs GUI
@@ -45,31 +49,35 @@
 (tool-bar-mode -1)
 ;; (tooltip-mode -1)
 (set-fringe-mode 10) ; Give some breathing room
-(defvar abumacs/default-font-size 100)
+(defvar abu/default-font-size 110)
 (column-number-mode)
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers-type 'relative)
 ;; (menu-bar-mode -1)
 ;; Disable line numbers for some modes
-(dolist (mode '(org-mode-hook
-                term-mode-hook))
-  shell-mode-hook
-                eshell-mode-hook
+(dolist (mode '(term-mode-hook
+               shell-mode-hook
+               treemacs-mode-hook
+               eshell-mode-hook))
  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+end_src
+
+#+RESULTS:
 
 ** Fonts
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default nil :font "CaskaydiaCove Nerd Font Mono" :height 100)
+(set-face-attribute 'default nil :font "Fantasque Sans Mono" :height 145)
 #+end_src
 
 ** Theme
 
 #+begin_src emacs-lisp
 (use-package doom-themes
-  :init (load-theme 'doom-nord))
+  :init (load-theme 'doom-nord t))
 #+end_src
+
+#+RESULTS:
 
 
 ** Rainbow Delimiters
@@ -91,7 +99,7 @@ Remember to run M-x all-the-icons-install-fonts
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 15)))
+  :custom ((doom-modeline-height 20)))
 #+end_src
 
 ** Which Key
@@ -166,15 +174,26 @@ Remember to run M-x all-the-icons-install-fonts
 #+begin_src emacs-lisp
 (use-package general
   :config
-  (general-create-definer abumacs/leader-keys
+  (general-create-definer abu/leader-keys
     :keymaps '(normal visual)
     :prefix "SPC"
     :global-prefix "C-SPC")
 
-  (abumacs/leader-keys
-    "t" '(:ignore t :which-key "Toggles")
-    "tt" '(counsel-load-theme :which-key "Choose theme")))
+  (abu/leader-keys
+    "SPC" '(counsel-M-x :which-key "M-x")
+    "t" '(:ignore t :which-key "treemacs")
+    "T" '(:ignore t :which-key "Toggles")
+    "g" '(:ignore t :which-key "Git")
+    "b" '(:ignore t :which-key "Buffers")
+    "bb" '(ibuffer :which-key "All Buffers")
+    "bp" '(previous-buffer :which-key "Previous Buffer")
+    "b TAB" '(mode-line-other-buffer :which-key "Toggle Recent Buffers")
+    "bn" '(next-buffer :which-key "Next Buffer")
+    "Tt" '(counsel-load-theme :which-key "Choose theme")))
 #+end_src
+
+#+RESULTS:
+: t
 
 ** Evil Mode
 
@@ -197,8 +216,14 @@ Remember to run M-x all-the-icons-install-fonts
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
+  (setq evil-want-fine-undo t)
   (evil-set-initial-state 'messages-buffer-mode 'normal)
 
+  (use-package undo-tree
+  :config
+  (global-undo-tree-mode)
+  (evil-set-undo-system 'undo-tree))
+  
   (evil-set-initial-state 'dashboard-mode 'normal))
 
 (use-package evil-collection
@@ -206,6 +231,9 @@ Remember to run M-x all-the-icons-install-fonts
   :config
   (evil-collection-init))
 #+end_src
+
+#+RESULTS:
+: t
 
 ** Key Chords
 
@@ -217,6 +245,15 @@ Remember to run M-x all-the-icons-install-fonts
   (key-chord-define evil-insert-state-map "kj" 'evil-normal-state))
 #+end_src
 
+** Key Bindings
+
+#+begin_src emacs-lisp
+(use-package yasnippet :config (yas-global-mode))
+(use-package yasnippet-snippets)
+#+end_src
+cbl
+#+RESULTS:
+
 ** Hydra Transitive Bindings
 
 #+begin_src emacs-lisp
@@ -227,6 +264,139 @@ Remember to run M-x all-the-icons-install-fonts
   ("k" text-scale-increase "In")
   ("q" nil "Quit" :exit t))
 
-(abumacs/leader-keys
-  "ts" '(hydra-text-scale/body :which-key "Adjust text size"))
+(abu/leader-keys
+  "Ts" '(hydra-text-scale/body :which-key "Adjust text size"))
+#+end_src
+
+* Projectile
+
+#+begin_src emacs-lisp
+(use-package projectile
+  :diminish projectile-mode
+  :custom ((projectile-completion-system 'ivy))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :init
+  ;; NOTE: Set this to the folder where you keep your Git repos!
+  (when (file-directory-p "~/Projects/Code")
+    (setq projectile-project-search-path '("~/Projects/Code")))
+  (setq projectile-switch-project-action #'projectile-dired))
+  :config
+  (projectile-mode
+  (abu/leader-keys
+    "p" '(:keymap projectile-command-map :which-key "Project")))
+#+end_src
+
+** Counsel Projectile
+   
+#+begin_src emacs-lisp
+(use-package counsel-projectile
+  :config (counsel-projectile-mode))
+#+end_src
+
+* Magit
+  
+#+begin_src emacs-lisp
+(use-package magit
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  :config
+  (abu/leader-keys
+    "gs" '(magit-status :which-key "Magit status"))
+#+end_src
+  
+* LSP
+
+#+begin_src emacs-lisp
+(defun abu/lsp-mode-setup ()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode))
+
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . abu/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :config
+  (lsp-enable-which-key-integration t))
+
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :config
+  (setq lsp-ui-sideline-show-diagnostics t)
+  :custom
+  (lsp-ui-doc-position 'bottom))
+
+(use-package lsp-treemacs
+  :after lsp)
+(abu/leader-keys
+  "tt" '(treemacs :which-key "Open Treemacs"))
+
+(use-package lsp-ivy)
+#+end_src
+
+#+RESULTS:
+
+** Flycheck
+
+#+begin_src emacs-lisp
+(use-package flycheck
+  :init (global-flycheck-mode))
+#+end_src
+
+** Tree sitter
+
+#+begin_src emacs-lisp
+(use-package tree-sitter
+  :init
+  (global-tree-sitter-mode))
+(use-package tree-sitter-langs)
+#+end_src
+
+** Typescript
+
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+#+end_src
+
+** Java
+
+#+begin_src emacs-lisp
+(use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+(use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
+#+end_src
+
+** Company Mode
+
+#+begin_src emacs-lisp
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+          ("<tab>" . company-complete-selection)
+          ("C-l" . company-complete-selection))
+        (:map lsp-mode-map
+          ("<tab>" . company-complete-selection)
+          ("C-l" . company-complete-selection))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+#+end_src
+
+* Git Gutter
+
+#+begin_src emacs-lisp
+(use-package diff-hl
+  :init
+  (global-diff-hl-mode)
+  (diff-hl-flydiff-mode)
+  (diff-hl-dired-mode)
+  (diff-hl-margin-mode))
 #+end_src
