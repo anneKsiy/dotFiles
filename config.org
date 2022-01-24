@@ -32,12 +32,14 @@
 * General Tweaks
 
 #+begin_src emacs-lisp
-(use-package exec-path-from-shell
-   :config (exec-path-from-shell-initialize))
-(setq scroll-margin 8)
-(setq scroll-conservatively 100)
-(setq visual-bell t)
-(setq ring-bell-function 'ignore)
+  (use-package exec-path-from-shell
+     :config (exec-path-from-shell-initialize))
+  (setq scroll-margin 8)
+  (setq scroll-conservatively 101)
+  (setq scroll-step 1) 
+  (setq visual-bell t)
+  (setq ring-bell-function 'ignore)
+  (blink-cursor-mode -1)
 #+end_src
 
 * Emacs GUI
@@ -49,26 +51,33 @@
 (tool-bar-mode -1)
 ;; (tooltip-mode -1)
 (set-fringe-mode 10) ; Give some breathing room
-(defvar abu/default-font-size 110)
+(defvar abu/default-font-size 120)
 (column-number-mode)
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers-type 'relative)
 ;; (menu-bar-mode -1)
 ;; Disable line numbers for some modes
 (dolist (mode '(term-mode-hook
+              org-mode-hook
                shell-mode-hook
                treemacs-mode-hook
                eshell-mode-hook))
  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+end_src
 
-#+RESULTS:
-
 ** Fonts
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default nil :font "Fantasque Sans Mono" :height 145)
+(set-face-attribute 'default nil :font "Fantasque Sans Mono" :height abu/default-font-size)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Fantasque Sans Mono" :height 120)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
 #+end_src
+
+#+RESULTS:
 
 ** Theme
 
@@ -76,9 +85,6 @@
 (use-package doom-themes
   :init (load-theme 'doom-nord t))
 #+end_src
-
-#+RESULTS:
-
 
 ** Rainbow Delimiters
 
@@ -116,6 +122,61 @@ Remember to run M-x all-the-icons-install-fonts
 
 #+begin_src emacs-lisp
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+end_src
+
+* Org
+
+#+begin_src emacs-lisp
+  (defun abu/org-mode-setup ()
+    (org-indent-mode)
+    (variable-pitch-mode 1)
+    (visual-line-mode 1))
+
+
+  (defun abu/org-font-setup ()
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+    (dolist (face '((org-level-1 . 1.2)
+                    (org-level-2 . 1.1)
+                    (org-level-3 . 1.05)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.1)
+                    (org-level-6 . 1.1)
+                    (org-level-7 . 1.1)
+                    (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+
+  (defun abu/org-mode-visual-fill ()
+    (setq visual-fill-column-width 100
+          visual-fill-column-center-text t)
+    (visual-fill-column-mode 1))
+
+  (use-package org
+    :hook (org-mode . abu/org-mode-setup)
+    :config
+    (setq org-ellipsis " ▾")
+    (abu/org-font-setup)
+    (setq org-agenda-files '("~/Documents/OrgStuff/schedule.org")))
+
+  (use-package org-bullets
+    :after org
+    :hook (org-mode . org-bullets-mode)
+    :custom
+    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+  (use-package visual-fill-column
+    :hook (org-mode . abu/org-mode-visual-fill))
 #+end_src
 
 * Ivy Auto-complete
@@ -181,19 +242,50 @@ Remember to run M-x all-the-icons-install-fonts
 
   (abu/leader-keys
     "SPC" '(counsel-M-x :which-key "M-x")
-    "t" '(:ignore t :which-key "treemacs")
-    "T" '(:ignore t :which-key "Toggles")
+    "t" '(:ignore t :which-key "Treemacs")
     "g" '(:ignore t :which-key "Git")
-    "b" '(:ignore t :which-key "Buffers")
-    "bb" '(ibuffer :which-key "All Buffers")
-    "bp" '(previous-buffer :which-key "Previous Buffer")
-    "b TAB" '(mode-line-other-buffer :which-key "Toggle Recent Buffers")
-    "bn" '(next-buffer :which-key "Next Buffer")
-    "Tt" '(counsel-load-theme :which-key "Choose theme")))
+    "TAB" '(mode-line-other-buffer :which-key "Toggle Recent Buffers")))
 #+end_src
 
-#+RESULTS:
-: t
+** Buffer Keybindings
+
+#+begin_src emacs-lisp
+(abu/leader-keys
+  "b" '(:ignore t :which-key "Buffers")
+  "bb" '(ibuffer :which-key "All Buffers")
+  "bf" '(counsel-ibuffer :which-key "Find Buffer")
+  "bp" '(previous-buffer :which-key "Previous Buffer")
+  "bn" '(next-buffer :which-key "Next Buffer")
+  "b TAB" '(mode-line-other-buffer :which-key "Toggle Recent Buffers"))
+#+end_src
+
+** File Keybindings
+
+#+begin_src emacs-lisp
+(abu/leader-keys
+    "f" '(:ignore t :which-key "Files")
+    "ff" '(find-file :which-key "Find File")
+    "fs" '(save-buffer :which-key "Save File")
+    "fd" '(dired :which-key "Dired"))
+#+end_src
+
+** Toggles Keybindings
+
+#+begin_src emacs-lisp
+  (abu/leader-keys
+    "T" '(:ignore t :which-key "Toggles")
+    "Tt" '(counsel-load-theme :which-key "Choose theme"))
+#+end_src
+
+** Help Keybindings
+
+#+begin_src emacs-lisp
+  (abu/leader-keys
+    "h" '(:ignore t :which-key "Help")
+    "hf" '(describe-function :which-key "Describe Function")
+    "hv" '(describe-variable :which-key "Describe Variable")
+    "hk" '(describe-key :which-key "Describe Key Binding"))
+#+end_src
 
 ** Evil Mode
 
@@ -232,9 +324,6 @@ Remember to run M-x all-the-icons-install-fonts
   (evil-collection-init))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** Key Chords
 
 #+begin_src emacs-lisp
@@ -245,14 +334,12 @@ Remember to run M-x all-the-icons-install-fonts
   (key-chord-define evil-insert-state-map "kj" 'evil-normal-state))
 #+end_src
 
-** Key Bindings
+** Snippets
 
 #+begin_src emacs-lisp
 (use-package yasnippet :config (yas-global-mode))
 (use-package yasnippet-snippets)
 #+end_src
-cbl
-#+RESULTS:
 
 ** Hydra Transitive Bindings
 
@@ -308,34 +395,34 @@ cbl
 * LSP
 
 #+begin_src emacs-lisp
-(defun abu/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
+  (defun abu/lsp-mode-setup ()
+    (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+    (lsp-headerline-breadcrumb-mode))
 
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . abu/lsp-mode-setup)
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :config
-  (lsp-enable-which-key-integration t))
+  (use-package lsp-mode
+    :commands (lsp lsp-deferred)
+    :hook ((lsp-mode . abu/lsp-mode-setup)
+	    (typescript-mode . lsp)
+	     (web-mode . lsp))
+    :init
+    (setq lsp-keymap-prefix "SPC l")
+    :config
+    (lsp-enable-which-key-integration t))
 
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :config
-  (setq lsp-ui-sideline-show-diagnostics t)
-  :custom
-  (lsp-ui-doc-position 'bottom))
+  (use-package lsp-ui
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-sideline-show-diagnostics t)
+    :custom
+    (lsp-ui-doc-position 'bottom))
 
-(use-package lsp-treemacs
-  :after lsp)
-(abu/leader-keys
-  "tt" '(treemacs :which-key "Open Treemacs"))
+  (use-package lsp-treemacs
+    :after lsp)
+  (abu/leader-keys
+    "tt" '(treemacs :which-key "Open Treemacs"))
 
-(use-package lsp-ivy)
+  (use-package lsp-ivy)
 #+end_src
-
-#+RESULTS:
 
 ** Flycheck
 
@@ -357,10 +444,23 @@ cbl
 
 #+begin_src emacs-lisp
 (use-package typescript-mode
-  :mode "\\.ts\\'"
   :hook (typescript-mode . lsp-deferred)
   :config
   (setq typescript-indent-level 2))
+#+end_src
+
+** Web Mode
+
+#+begin_src 
+(defun abu/web-mode-init ()
+  "Hooks for web mode. Adjust indent"
+  (setq web-mode-markup-indent-offset 2))
+
+(use-package web-mode
+  :hook ((web-mode . abu/web-mode-init)
+          (web-mode . lsp-deferred))
+  :config (add-to-list 'auto-mode-alist '("\\.[tj]sx?$" . web-mode))
+(setq web-mode-content-types-alist '(("[tj]sx" . "\\.[tj]sx?\\'")))
 #+end_src
 
 ** Java
