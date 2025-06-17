@@ -1,13 +1,10 @@
-#+TITLE: anneKsiy's GNU Emacs Config
+#+TITLE: anneKsiy's  Emacs Config
 #+AUTHOR: Abdullah "anneKsiy" Adam
 
 * Table of contents: :TOC:
   - [[Initial Config][Initial Config]]
   - [[Emacs GUI][Emacs GUI]]
     
-* Initial Config
-** The beginning
-  This is the first GNU Emacs Config I have written from scratch, it starts here...
 
 * Packages
 
@@ -18,46 +15,39 @@
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
+; straight
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
 
 (unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+  (straight-use-package 'use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
 #+end_src
 
-* General Tweaks
-
-#+begin_src emacs-lisp
-  ;; set timezone
-  (setenv "TZ" "Africa/Harare")
-  (use-package exec-path-from-shell
-     :config (exec-path-from-shell-initialize))
-  (setq scroll-margin 8)
-  (setq scroll-conservatively 101)
-  (setq scroll-step 1)
-  (setq visual-bell t)
-  (setq ring-bell-function 'ignore)
-  (setq markdown-max-image-size '(450 . 450))
-  (setq toggle-truncate-lines 1)
-  (electric-pair-mode 1)
-  (blink-cursor-mode -1)
-  (global-diff-hl-mode 1)
-  (global-set-key [S-wheel-right] 'scroll-left)
-  (global-set-key [S-wheel-left] 'scroll-right)
-  (add-to-list 'exec-path "~/kotlin-language-server/server/build/install/server/bin")
-  (setq exec-path (append exec-path '("/Users/adammabd/.nvm/versions/node/v17.2.0/bin")))
-  (setq warning-suppress-types '(yasnippet backquote-change))
-
-#+end_src
-
-#+RESULTS:
-| yasnippet | backquote-change |
-
+* Other
 ** vterm
+
 
 #+begin_src  emacs-lisp
     (use-package vterm
@@ -71,9 +61,17 @@
 ** Smooth Scrolling
 
 #+begin_src  emacs-lisp
-      (use-package good-scroll
-         :config
-           (good-scroll-mode -1))
+      ;(use-package good-scroll
+         ;:config
+           ;(good-scroll-mode -1))
+
+;; (use-package ultra-scroll
+;;   ;:load-path "~/code/emacs/ultra-scroll" ; if you git clone'd instead of package-vc-install
+;;   :init
+;;   (setq scroll-conservatively 101 ; important!
+;;         scroll-margin 8) 
+;;   :config
+;;   (ultra-scroll-mode 0))
 #+end_src
 
 ** Tab Tweaks
@@ -81,8 +79,8 @@
 #+begin_src  emacs-lisp
           ; START TABS CONFIG
         ;; Create a variable for our preferred tab width
-        (setq-default tab-width 2)
-        (setq custom-tab-width 2)
+        (setq-default tab-width 4)
+        (setq custom-tab-width 4)
         ;; Two callable functions for enabling/disabling tabs in Emacs
         (defun disable-tabs () (interactive) (setq indent-tabs-mode nil))
         (defun enable-tabs  ()
@@ -150,93 +148,110 @@
 ** UI Tweaks
 
 #+begin_src emacs-lisp
-    ;; (scroll-bar-mode -1)
-    (tool-bar-mode -1)
-    ;; (tooltip-mode -1)
-    (set-fringe-mode 10) ; Give some breathing room
-    (column-number-mode)
-    (global-display-line-numbers-mode 1)
-    (setq display-line-numbers-type 'relative)
-    ;; (menu-bar-mode -1)
-    ;; Disable line numbers for some modes
-    (dolist (mode '(term-mode-hook
-                  vterm-mode-hook
-                  org-mode-hook
-                   shell-mode-hook
-                   treemacs-mode-hook
-                   Info-mode-hook
-                   ielm-mode-hook
-                   ranger-mode-hook
-                   dired-mode-hook
-                   eshell-mode-hook))
-     (add-hook mode (lambda () (display-line-numbers-mode 0))))
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+;; (tooltip-mode -1)
+(set-fringe-mode 10) ; Give some breathing room
+(column-number-mode)
+(global-display-line-numbers-mode 1)
+(setq display-line-numbers-type 'relative)
+;; (menu-bar-mode -1)
+;; Disable line numbers for some modes
+(dolist (mode '(term-mode-hook
+                vterm-mode-hook
+                org-mode-hook
+                shell-mode-hook
+                treemacs-mode-hook
+                Info-mode-hook
+                ielm-mode-hook
+                ranger-mode-hook
+                dired-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+;; mouse click to open url
+(global-set-key (kbd "s-<mouse-1>") 'browse-url-at-mouse)
 #+end_src
 
 #+RESULTS:
-| abu/org-mode-visual-fill | doom-modeline-set-info-modeline | (lambda nil (set-face-attribute 'default nil :font Cantarell :height (add-hook 'Info-mode-hook 'abu/org-mode-visual-fill) 150 :weight 'regular)) | (lambda nil (display-line-numbers-mode 0)) | turn-on-font-lock |
+: browse-url-at-mouse
 
 ** Evil Mode
 
 #+begin_src emacs-lisp
-  (use-package evil
-    :init
-    (setq evil-want-integration t)
-    (setq evil-want-keybinding nil)
-    (setq evil-want-C-u-scroll t)
-    (setq evil-want-C-i-jump t)
-    (setq evil-shift-width 2)
-    (setq evil-cross-lines t)
-    (setq evil-respect-visual-line-mode t)
-    (setq evil-vsplit-window-below t)
-    (setq evil-split-window-below t)
-    :config
-    (evil-mode 1)
-    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+(use-package evil
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump t)
+  (setq evil-shift-width 2)
+  (setq evil-cross-lines t)
+  (setq evil-respect-visual-line-mode t)
+  (setq evil-vsplit-window-below t)
+  (setq evil-split-window-below t)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
 
-    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
-    (setq evil-want-fine-undo t)
-    (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (add-hook 'evil-visual-activate-hook #'(lambda () (global-hl-line-mode 0) (message "Hello visual!")))
+  (add-hook 'evil-visual-deactivate-hook #'(lambda () (global-hl-line-mode 1)))
 
-    (use-package undo-tree
-      :config
-      (global-undo-tree-mode)
-      (evil-set-undo-system 'undo-tree))
+  (setq evil-want-fine-undo t)
+  (evil-set-initial-state 'messages-buffer-mode 'normal))
 
-    (evil-set-initial-state 'dashboard-mode 'normal))
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode)
+  (evil-set-undo-system 'undo-tree))
 
-  (use-package evil-collection
-    :after evil
-    :config
-    (evil-collection-init))
+(evil-set-initial-state 'dashboard-mode 'normal)
 
-  ;; setting up evil paste from macro register
-  (defun evil-paste-kbd-macro-advice (&rest argv)
-    "make evil paste kbd-macro if register content is a macro.
+(defun abu/evil-company-minibuffer ()
+  (when (minibufferp)
+        (evil-define-key 'insert 'local (kbd "C-g") 'abort-minibuffers)
+        (evil-define-key 'insert 'local (kbd "C-k") 'ivy-previous-line)
+        (if (string-match ".*Find file: " (ivy-prompt))
+            (evil-define-key 'insert 'local (kbd "<backspace>") 'ivy-backward-kill-word)
+          (evil-define-key 'insert 'local (kbd "<backspace>") 'ivy-backward-delete-char))))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (setq evil-collection-setup-minibuffer t)
+  (add-hook 'evil-insert-state-entry-hook 'abu/evil-company-minibuffer)
+  (setq evil-want-minibuffer t)
+  (evil-collection-init))
+
+;; setting up evil paste from macro register
+(defun evil-paste-kbd-macro-advice (&rest argv)
+  "make evil paste kbd-macro if register content is a macro.
   this function check whether content is a macro by:
    1. equal to `last-kbd-macro'
    2. is a vector but not string
    3. contain unprintable character"
-    (if (and (>= (length argv) 2)
-             (second argv))
-        (let* ((register (second argv))
-               (register-pair (assoc register register-alist))
-               (content (if register-pair (cdr register-pair))))
-          (if (and content
-                   (or (eq last-kbd-macro content)
-                       (vectorp content)
-                       (string-match "[^\t[:print:]\n\r]" content)))
-              (let ((last-kbd-macro content))
-                (forward-line)
-                (beginning-of-line)
-                (insert-kbd-macro '##)
-                (forward-line -2)
-                (search-forward "setq last-kbd-macro")
-                (replace-match "execute-kbd-macro")
-                t)))))
-  (advice-add 'evil-paste-after :before-until
-              'evil-paste-kbd-macro-advice)
+  (if (and (>= (length argv) 2)
+           (second argv))
+      (let* ((register (second argv))
+             (register-pair (assoc register register-alist))
+             (content (if register-pair (cdr register-pair))))
+        (if (and content
+                 (or (eq last-kbd-macro content)
+                     (vectorp content)
+                     (string-match "[^\t[:print:]\n\r]" content)))
+            (let ((last-kbd-macro content))
+              (forward-line)
+              (beginning-of-line)
+              (insert-kbd-macro '##)
+              (forward-line -2)
+              (search-forward "setq last-kbd-macro")
+              (replace-match "execute-kbd-macro")
+              t)))))
+(advice-add 'evil-paste-after :before-until
+            'evil-paste-kbd-macro-advice)
 #+end_src
 
 #+RESULTS:
@@ -261,7 +276,7 @@
           ("C-<tab>" . centaur-tabs-forward)
           ("C-S-<tab>" . centaur-tabs-backward))
     )
-    (centaur-tabs-mode nil)
+    (centaur-tabs-mode 0) ;; set to nil for on
 #+end_src
 
 ** Dashboard
@@ -286,6 +301,32 @@
 ** Fonts
 
 #+begin_src emacs-lisp
+  (defvar abu/default-font-size 160)
+  ;(set-face-attribute 'default nil :font "Source Code Pro" :height abu/default-font-size)
+  (set-face-attribute 'default nil :font "Iosevka" :height abu/default-font-size)
+  ;(set-face-attribute 'default nil :font "Ubuntu Mono derivative Powerline" :height abu/default-font-size)
+  ;(set-face-attribute 'default nil :font "Fira Mono for Powerline" :height abu/default-font-size)
+
+  ;; Set the fixed pitch face
+  ;;(set-face-attribute 'fixed-pitch nil :font "Source Code Pro" :height 145)
+  (set-face-attribute 'fixed-pitch nil :font "Iosevka" :height abu/default-font-size)
+  ;(set-face-attribute 'fixed-pitch nil :font "Ubuntu Mono derivative Powerline" :height abu/default-font-size)
+  ;(set-face-attribute 'fixed-pitch nil :font "Fira Mono for Powerline" :height abu/default-font-size)
+
+  ;; Set the variable pitch face
+  ;(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 160 :weight 'regular)
+  ;(set-face-attribute 'variable-pitch nil :font "Amazon Ember" :height 145 :weight 'regular)
+  (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
+  ;(set-face-attribute 'fixed-pitch nil :font "Inconsolata" :height abu/default-font-size)
+
+  ;; set frame font
+  (add-to-list 'default-frame-alist '(font . "Iosevka"))
+  ;(add-to-list 'default-frame-alist '(font "Inconsolata"))
+
+(defun abu/configure-frame-font (frame)
+  "Configure font given initial non-daemon FRAME.
+Intended for `after-make-frame-functions'."
+  ;; Do stuff with FRAME...
   (defvar abu/default-font-size 155)
   ;(set-face-attribute 'default nil :font "Source Code Pro" :height abu/default-font-size)
   (set-face-attribute 'default nil :font "Iosevka" :height abu/default-font-size)
@@ -299,22 +340,26 @@
   ;(set-face-attribute 'fixed-pitch nil :font "Fira Mono for Powerline" :height abu/default-font-size)
 
   ;; Set the variable pitch face
-  ;(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 145 :weight 'regular)
-  (set-face-attribute 'variable-pitch nil :font "Amazon Ember" :height 145 :weight 'regular)
+  ;(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 160 :weight 'regular)
+  ;(set-face-attribute 'variable-pitch nil :font "Amazon Ember" :height 145 :weight 'regular)
+  (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
   ;(set-face-attribute 'fixed-pitch nil :font "Inconsolata" :height abu/default-font-size)
 
   ;; set frame font
   (add-to-list 'default-frame-alist '(font . "Iosevka"))
-  ;(add-to-list 'default-frame-alist '(font "Inconsolata"))
+  (remove-hook 'after-make-frame-functions #'abu/configure-frame-font))
+
+(add-hook 'after-make-frame-functions #'abu/configure-frame-font)
 
 #+end_src
 
 #+RESULTS:
-: ((font . Iosevka) (left-fringe . 10) (right-fringe . 10))
+| abu/configure-frame-font | evil-init-esc | select-frame |
 
 ** Theme
 
 #+begin_src emacs-lisp
+  (use-package spacemacs-theme)
   (use-package doom-themes
     :init (load-theme 'doom-nord t))
 #+end_src
@@ -339,7 +384,8 @@ Remember to run M-x all-the-icons-install-fonts
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 20)))
+  :custom ((doom-modeline-height 20))
+  :config (setq doom-modeline-buffer-file-name-style 'relative-from-project))
 #+end_src
 
 ** Which Key
@@ -365,30 +411,46 @@ Remember to run M-x all-the-icons-install-fonts
   (org-indent-mode)
   (variable-pitch-mode 1)
   (visual-line-mode 1)
+  (setq org-log-done 'time) ;; can change to 'note if you want to take notes when closing an item as well
   (setq org-src-preserve-indentation t)
-  (setq org-todo-keywords '((sequence "TODO" "PENDING" "LEARN" "DELEGATE" "DONE")))
+  (setq org-custom-properties '("TICKET_LINK" "TICKET_TITLE"))
+  (setq org-todo-keywords '((sequence "TODO" "PENDING" "DELEGATE" "TICKLER" "BLOCKED" "DONE")))
+  (setq org-refile-targets '((nil . (:level . 2))))
   (setq org-todo-keyword-faces '(
                                  ("TODO" (:foreground "orange" :weight bold))
                                  ("PENDING" (:foreground "brown" :weight bold))
-                                 ("LEARN" (:foreground "sea green" :weight bold))
-                                 ("DELEGATE" (:foreground "yellow" :weight bold)))))
+                                 ("TICKLER" (:foreground "red" :weight bold))
+                                 ("BLOCKED" (:foreground "maroon" :weight bold))
+                                 ("DELEGATE" (:foreground "blue" :weight bold)))))
 
+
+;; Change the way org exports code blocks to markdown
+(defun org-md-example-block (example-block _contents info)
+  "Transcode EXAMPLE-BLOCK element into Markdown format.
+CONTENTS is nil.  INFO is a plist used as a communication
+channel."
+  (concat "```\n"
+          (org-remove-indentation
+           (org-export-format-code-default example-block info))
+          "```"))
 
 (defun abu/org-font-setup ()
   (interactive)
   (font-lock-add-keywords 'org-mode
                           '(("^ *\\([-]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  (set-face-attribute 'org-document-title nil :font "Iosevka Aile" :weight 'bold :height 1.3)
 
-  (dolist (face '((org-level-1 . 1.5)
-                  (org-level-2 . 1.3)
+
+  (dolist (face '((org-level-1 . 1.4)
+                  (org-level-2 . 1.2)
                   (org-level-3 . 1.1)
                   (org-level-4 . 1.1)
                   (org-level-5 . 1.1)
                   (org-level-6 . 1.1)
                   (org-level-7 . 1.1)
                   (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+    (set-face-attribute (car face) nil :font "Iosevka Aile" :weight 'bold :height (cdr face)))
 
   ;; Ensure that anything that should be fixed-pitch in Org files appears that way
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
@@ -401,8 +463,9 @@ Remember to run M-x all-the-icons-install-fonts
 
 (defun abu/org-mode-visual-fill ()
   (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
-  (visual-fill-column-mode 1))
+        visual-fill-column-center-text t
+        visual-fill-column-enable-sensible-window-split t)
+  (visual-fill-column-mode 0))
 
 ;;     (defun abu/org-mode-visual-fill ()
 ;;       (setq visual-fill-column-width 100
@@ -420,7 +483,15 @@ Remember to run M-x all-the-icons-install-fonts
   :config
   (setq org-ellipsis " ▾")
   (abu/org-font-setup)
-  (setq org-agenda-files '("~/Documents/OrgStuff/schedule.org")))
+  (abu/org-mode-setup)
+                                        ;(setq org-agenda-files '("~/Documents/OrgStuff/schedule.org"))
+  (setq org-agenda-files '("/Users/adammabd/Documents/OrgStuff/roam/20230821103815-todo.org"))
+  (setq org-highest-priority ?A
+        org-lowest-priority ?E
+        org-default-priority ?B)
+  (setq org-capture-templates
+        '(("t" "Todo" entry (file+headline "~/Documents/OrgStuff/roam/20230821103815-todo.org" "Work Todo List")
+           "** %^{Todo type|TODO|PENDING|DELEGATE|TICKLER|BLOCKED} [#%^{Priority type|A|B|C|D}] %?\n:PROPERTIES:\n:CATEGORY: %^{Category type|Code|Admin|Ops|Study|CR|Side-projects|Doc|Home|Miata}\n:TICKET_LINK: %^{Ticket link}\n:TICKET_TITLE: %^{Ticket title}\n:END:"))))
 
 (use-package org-bullets
   :after org
@@ -434,7 +505,7 @@ Remember to run M-x all-the-icons-install-fonts
 #+end_src
 
 #+RESULTS:
-| abu/org-mode-visual-fill | doom-modeline-set-info-modeline | (lambda nil (display-line-numbers-mode 0)) | turn-on-font-lock |
+| abu/org-mode-visual-fill | doom-modeline-set-info-modeline | (lambda nil (set (make-local-variable 'visual-fill-column-width) 90)) | (lambda nil (display-line-numbers-mode 0)) | turn-on-font-lock |
 
 ** Org roam
 
@@ -445,6 +516,22 @@ Remember to run M-x all-the-icons-install-fonts
   :custom
   (org-roam-directory "~/Documents/OrgStuff/roam")
   (org-roam-completion-everywhere t)
+  (org-roam-capture-templates
+   '(
+     ("d" "default" plain
+      "%?"
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     ("l" "Note for studying" plain
+      "* %^{Topic}\n** Overview\n%^{Overview Text}\n** %^{First Heading}\n%?"
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     ("m" "Meeting notes" plain
+      "* %^{Topic}\n** Background\n%^{Background Text}\n** Meeting Attendees\n*** %^{Attendees}\n** Notes\n*** \n** AIs\n*** "
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     )
+   )
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
@@ -452,6 +539,21 @@ Remember to run M-x all-the-icons-install-fonts
          ("C-M-i" . completion-at-point))
   :config
   (org-roam-setup))
+#+end_src
+
+#+RESULTS:
+: completion-at-point
+
+** Org roam ui visualize
+
+#+begin_src emacs-lisp
+;; (use-package org-roam-ui
+;;   :after org-roam
+;;   :config
+;;   (setq org-roam-ui-sync-theme t
+;;         org-roam-ui-follow t
+;;         org-roam-ui-update-on-save t
+;;         org-roam-ui-open-on-start t))
 #+end_src
 
 ** Org tree slide
@@ -512,6 +614,8 @@ Remember to run M-x all-the-icons-install-fonts
            (Man-completion-table . "")
            (woman . "")))
     (setq ivy-wrap 1)
+    (evil-set-initial-state 'ivy-occur-grep-mode 'normal)
+    (evil-set-initial-state 'ivy-occur-mode 'normal)
     (ivy-mode 1))
 
   (use-package ivy-rich
@@ -552,7 +656,8 @@ Functions for use in the general keybinding section
 
 #+begin_src emacs-lisp
   (setq config-file "~/.emacs.d/config.org")
-  (setq schedule-file "~/Documents/OrgStuff/schedule.org")
+  ;(setq schedule-file "~/Documents/OrgStuff/schedule.org")
+  (setq schedule-file "/Users/adammabd/Documents/OrgStuff/roam/20230821103815-todo.org")
   (setq zshrc-file "~/.zshrc")
   (setq notes-file "/Users/adammabd/Documents/OrgStuff/roam/20220909153229-notes_home.org")
   (defun abu/open-config ()
@@ -570,10 +675,16 @@ Functions for use in the general keybinding section
   (defun abu/open-scratch ()
     (interactive)
     (switch-to-buffer "*scratch*"))
+  (defun abu/open-messages ()
+    (interactive)
+    (switch-to-buffer "*Messages*"))
   (defun abu/open-dashboard ()
     (interactive)
     (switch-to-buffer "*dashboard*"))
 #+end_src
+
+#+RESULTS:
+: abu/open-dashboard
 
 #+begin_src emacs-lisp
 (use-package general
@@ -588,6 +699,7 @@ Functions for use in the general keybinding section
     "t" '(:ignore t :which-key "Treemacs")
     "g" '(:ignore t :which-key "Git")
     "s" '(:ignore t :which-key "Search/Replace" )
+    "q" '(:ignore t :which-key "Q (GenAI)" )
     "TAB" '(mode-line-other-buffer :which-key "Toggle Recent Buffers")))
 #+end_src
 
@@ -643,51 +755,77 @@ Functions for use in the general keybinding section
         "fz" '(abu/open-zshrc :which-key "Zshrc")
         "bD" '(abu/open-dashboard :which-key "Open Dashboard")
         "fn" '(abu/open-notes :which-key "Notes File")
+        "fm" '(abu/open-messages :which-key "Messages File")
         "fS" '(abu/open-scratch :which-key "Scratch File"))
 #+end_src
 
 ** Terminal Keybindings
 
 #+begin_src emacs-lisp
-  ;; TODO use a list
-  (setq current-vterm-buffer "")
-  (defun abu/vterm-here ()
-    "Opens up a new shell in the directory associated with the
-    current buffer's file. The vterm is renamed to match that
-    directory to make multiple vterm windows easier."
-    (interactive)
-    (let* ((parent (if (buffer-file-name)
-                       (file-name-directory (buffer-file-name))
-                     default-directory))
-           (height (/ (window-total-height) 3))
-           (name   (car (last (split-string parent "/" t)))))
+(defvar current-vterm-buffers '()
+  "List containing currently open vterm buffers.")
+
+(defun abu/vterm-here ()
+  "Opens up a new shell in the directory associated with the
+   current buffer's file. The vterm is renamed to match that
+   directory to make multiple vterm windows easier."
+  (interactive)
+  (let* ((parent (if (buffer-file-name)
+                     (file-name-directory (buffer-file-name))
+                   default-directory))
+         (height (/ (window-total-height) 3))
+         (name   (car (last (split-string parent "/" t))))
+         (all-buffer-names (split-string (mapconcat #'buffer-name (buffer-list) "BUFF-SEP") "BUFF-SEP"))
+         (vterm-buffer-name (concat "*vterm: " name "*")))
+    (let ((duplicate-name-count 0))
+      (setq vterm-buffer-name (reduce #'(lambda (acc curr)
+                                          (when (string-match (format "^*vterm: %s*" name) curr)
+                                            (setq acc
+                                                  (replace-regexp-in-string "\\*$\\|-[0-9]+\\*$"
+                                                                            (format "-%s*" (setq duplicate-name-count (+ 1 duplicate-name-count)))
+                                                                            acc)))
+                                          acc)
+                                      all-buffer-names :initial-value vterm-buffer-name))
       (split-window-vertically (- height))
       (other-window 1)
-      (vterm "new")
-      (setq current-vterm-buffer (concat "*vterm: " name "*"))
-      (rename-buffer current-vterm-buffer)
+      (vterm vterm-buffer-name)
+      (push vterm-buffer-name current-vterm-buffers)
       (vterm-send-string "ls")
-      (vterm-send-return)))
-  ;;(vterm-send-string)))
-  (defun abu/insert-yes-into-minibuffer ()
-    (insert "yes")
-    (minibuffer-complete-and-exit))
-  (defun abu/vterm-close ()
-    "Closes the window created by the function 'vterm-here'"
-    (interactive)
-    ;;(insert "exit")
-    ;; TODO use ~kill-buffer "name"~
-    (if (eq current-vterm-buffer "")
+      (vterm-send-return))))
+
+(defun abu/vterm-close ()
+  "Closes the window created by the function 'vterm-here'."
+  (interactive)
+  ;;(insert "exit")
+  ;; TODO use ~kill-buffer "name"~
+  (if (equal current-vterm-buffers nil)
       (message "Cannot close empty buffer")
-      (add-hook 'minibuffer-setup-hook 'abu/insert-yes-into-minibuffer)
-      (setq confirm-nonexistent-file-or-buffer nil)
-      (kill-buffer current-vterm-buffer))
-      (remove-hook 'minibuffer-setup-hook 'abu/insert-yes-into-minibuffer)
-      (setq confirm-nonexistent-file-or-buffer "after-completion")
-    (delete-window))
-  (abu/leader-keys
-    "~" '(abu/vterm-close :which-key "Close vterm")
-    "`" '(abu/vterm-here :which-key "vterm"))
+    (let ((confirm-nonexistent-file-or-buffer nil)
+          (buffer-to-kill (ivy-read "Select a buffer to kill: " current-vterm-buffers)))
+
+      (setq current-vterm-buffers (remove buffer-to-kill current-vterm-buffers)) ;; set the global variable
+
+      (let ((current-window (window-normalize-window nil)))
+        (cond
+         ((eq current-window (window-main-window (window-frame current-window)))
+          (message "Not deleting current window as it is the sole ordinary window..."))
+         ((get-buffer-window buffer-to-kill) (delete-window (get-buffer-window buffer-to-kill)))
+         ((not (equal (buffer-name) buffer-to-kill)) (message "Not deleting current window as it does not contain buffer to be deleted."))
+         (t (delete-window))))
+      (let ((kill-buffer-query-functions nil))
+        (kill-buffer buffer-to-kill)))))
+
+
+(defun abu/visit-vterm ()
+  "Use ivy to prompt user for a buffer to switch to."
+  (interactive)
+  (let ((buffer-to-visit (ivy-read "Select terminal to visit: " current-vterm-buffers)))
+    (switch-to-buffer buffer-to-visit)))
+
+(abu/leader-keys
+  "~" '(abu/vterm-close :which-key "Close vterm")
+  "`" '(abu/vterm-here :which-key "vterm")
+  "." '(abu/visit-vterm :which-key "Find vterm"))
 #+end_src
 
 #+RESULTS:
@@ -743,7 +881,7 @@ Functions for use in the general keybinding section
     "hk" '(helpful-key :which-key "Helpful Key")
     "ha" '(apropos-command :which-key "Apropos Command")
     "hd" '(apropos-documentation :which-key "Apropos Documentation")
-    "hk" '(describe-key :which-key "Describe Key Binding"))
+    "hi" '(info :which-key "Info"))
 #+end_src
 
 ** Org Keybindings
@@ -751,12 +889,20 @@ Functions for use in the general keybinding section
 #+begin_src emacs-lisp
 (abu/leader-keys
   "o" '(:ignore t :which-key "Org")
-  "oa" '(org-agenda-list :which-key "Agenda List")
-  "oe" '(org-edit-src-code :which-key "Edit Source Block")
+  "oa" '(org-agenda :which-key "Agenda List")
+  "oc" '(org-edit-src-code :which-key "Edit Source Block")
+  "orc" '(org-capture :which-key "Org Capture")
+  "oCi" '(org-clock-in :which-key "Org clock in")
+  "oCo" '(org-clock-out :which-key "Org clock out")
+  "oCn" '(org-add-note :which-key "Org add note")
   "ol" '(org-roam-buffer-toggle :which-key "Org Roam Buffer Toggle")
   "of" '(org-roam-node-find :which-key "Org Roam Node Find")
+  "on" '(org-narrow-to-subtree :which-key "Org Narrow to Subtree")
+  "ow" '(widen :which-key "Org Widen")
   "oi" '(org-roam-node-insert :which-key "Org Roam Node Insert"))
 #+end_src
+
+#+RESULTS:
 
 ** Expand Region
 
@@ -932,12 +1078,94 @@ Functions for use in the general keybinding section
                    :italic t)))
   :config
   (abu/leader-keys
-    "gb" '(global-blamer-mode :which-key "Blamer mode"))
-  (global-blamer-mode 1))
+    "gB" '(global-blamer-mode :which-key "Blamer mode"))
+  (global-blamer-mode 0))
 #+end_src
+
 
 #+RESULTS:
 : blamer-show-commit-info
+
+** Magit helpers
+
+#+begin_src emacs-lisp
+(defun abu/get-magit-buffers ()
+  (interactive)
+  (let ((abu-magit-buffers
+         (-filter #'(lambda (buff) (string-prefix-p "magit:" (buffer-name buff))) (buffer-list)))
+        (selected-buffer nil))
+    (print abu-magit-buffers)
+    (setq selected-buffer (ivy-read "Select magit buffer: " (cl-map 'list #'(lambda (buff) (buffer-name buff)) abu-magit-buffers)))
+    (counsel-ibuffer-visit-buffer selected-buffer)))
+
+(abu/leader-keys
+  "gb" '(abu/get-magit-buffers :which-key "Magit buffers"))
+
+;; Easier smerge merge conflict resolution
+
+(defun abu/smerge-resolve-all-in-file-to (to-keep)
+  "Resolves all conflicts inside a file in preference of TO-KEEP
+
+TO-KEEP decides which part to keep and is one of `upper',
+`lower', `base'"
+  (interactive
+   (list (completing-read "Keeping (upper, base, lower): "
+                          '(upper base lower))))
+  (let ((resolve-func
+         (pcase to-keep
+           ("upper" 'smerge-keep-upper)
+           ("base"  'smerge-keep-base)
+           ("lower" 'smerge-keep-lower)
+           (_ (error "Unknown resolution argument!"))))
+        (num-chars-bfore (point-max)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (ignore-errors (not (smerge-vc-next-conflict)))
+        (funcall resolve-func)))
+    (when (= num-chars-bfore (point-max))
+      (message "No conflicts were found"))))
+
+(abu/leader-keys "gM" '(abu/smerge-resolve-all-in-file-to :which-key "Smerge resolve all in file"))
+
+;; smerge transient for easy merge conflict resolution
+(defhydra abu/smerge (:color red :hint nil)
+  "
+Navigate       Keep               other
+----------------------------------------
+_p_: previous  _c_: current       _e_: ediff
+_n_: next      _m_: mine  <<      _u_: undo
+_j_: up        _o_: other >>      _r_: refine
+_k_: down      _a_: combine       _q_: quit
+               _b_: base
+"
+  ("n" smerge-vc-next-conflict)
+  ("p" smerge-prev)
+  ("c" smerge-keep-current)
+  ("m" smerge-keep-mine)
+  ("o" smerge-keep-other)
+  ("b" smerge-keep-base)
+  ("a" smerge-keep-all)
+  ("e" smerge-ediff)
+  ("j" previous-line)
+  ("k" forward-line)
+  ("r" smerge-refine)
+  ("u" undo)
+  ("q" nil :exit t))
+
+(defun enable-smerge-maybe ()
+  (when (and buffer-file-name (vc-backend buffer-file-name))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "^<<<<<<< " nil t)
+        (smerge-mode +1)
+        (abu/smerge/body)))))
+
+(abu/leader-keys "gm" '(abu/smerge/body :which-key "Smerge Hydra"))
+
+
+#+end_src
+
+#+RESULTS:
 
 * LSP
 
@@ -967,12 +1195,27 @@ Functions for use in the general keybinding section
     :commands (lsp lsp-deferred)
     :hook ((lsp-mode . abu/lsp-mode-setup)
 	         (typescript-mode . lsp)
-	         (web-mode . lsp))
+	         (web-mode . lsp)
+	         (python-mode . lsp)
+           (brazil-config-mode . lsp))
     :init
     (setq lsp-keymap-prefix "C-c l")
     :config
     (lsp-enable-which-key-integration t)
-    (global-set-key (kbd "C-k") 'abu/toggle-lsp-ui-doc))
+    (evil-define-key 'normal 'global (kbd "C-k") 'abu/toggle-lsp-ui-doc)
+    (add-to-list 'lsp-language-id-configuration '(brazil-config-mode . "brazil-config"))
+    (lsp-register-client
+     (make-lsp-client
+      :priority -1
+      :new-connection (lsp-stdio-connection "barium")
+      :activation-fn (lsp-activate-on "brazil-config")
+      :server-id 'barium)))
+    ;;(global-unset-key (kbd "C-k"))
+;; (lsp-register-client
+;;     (make-lsp-client :new-connection (lsp-tramp-connection "solargraph")
+;;                      :major-modes '(ruby-mode)
+;;                      :remote? t
+;;                      :server-id 'solargraph-remote))
 
   (use-package lsp-ui
     :hook (lsp-mode . lsp-ui-mode)
@@ -1013,13 +1256,16 @@ Functions for use in the general keybinding section
 #+end_src
 
 #+RESULTS:
-| web-mode | web-mode | web-mode | web-mode | web-mode | web-mode | web-mode | typescript-mode |
+| web-mode | typescript-mode |
 
 *** Flycheck keybindings
 
 #+begin_src emacs-lisp
  (global-set-key (kbd "M-/") 'flycheck-explain-error-at-point) 
 #+end_src
+
+#+RESULTS:
+: flycheck-explain-error-at-point
 
 
 *** Flycheck hydra
@@ -1028,7 +1274,7 @@ Functions for use in the general keybinding section
 (use-package hydra)
 
 (defhydra hydra-flycheck (:color blue)
-"
+  "
   ^
   ^Flycheck^          ^Errors^            ^Checker^
   ^────────^──────────^──────^────────────^───────^─────
@@ -1039,18 +1285,17 @@ Functions for use in the general keybinding section
   ^^                  ^^                  ^^
 "
 
-'("stuff" ("more stuff") (1234))
-("q" nil)
-("<" flycheck-previous-error :color pink)
-(">" flycheck-next-error :color pink)
-("?" flycheck-describe-checker)
-("M" flycheck-manual)
-("d" flycheck-disable-checker)
-("f" flycheck-buffer)
-("l" flycheck-list-errors)
-("m" flycheck-mode)
-("s" flycheck-select-checker)
-("v" flycheck-verify-setup))
+  ("q" nil)
+  ("<" flycheck-previous-error :color pink)
+  (">" flycheck-next-error :color pink)
+  ("?" flycheck-describe-checker)
+  ("M" flycheck-manual)
+  ("d" flycheck-disable-checker)
+  ("f" flycheck-buffer)
+  ("l" flycheck-list-errors)
+  ("m" flycheck-mode)
+  ("s" flycheck-select-checker)
+  ("v" flycheck-verify-setup))
 
 (abu/leader-keys "lf" '(hydra-flycheck/body :which-key "Flycheck Hydra"))
 #+end_src
@@ -1067,6 +1312,8 @@ Functions for use in the general keybinding section
 (use-package tree-sitter-langs)
 #+end_src
 
+#+RESULTS:
+
 ** JS2
 
 #+begin_src  emacs-lisp
@@ -1077,6 +1324,9 @@ Functions for use in the general keybinding section
     :config
     (add-to-list 'auto-mode-alist '("\\.json$" . js-mode)))
 #+end_src
+
+#+RESULTS:
+| ac-js2-mode |
 
 ** Tide
 
@@ -1095,7 +1345,7 @@ Functions for use in the general keybinding section
 #+end_src
 
 #+RESULTS:
-| jest-test-mode | lsp-deferred | setup-tide-mode | evil-collection-typescript-mode-set-evil-shift-width | lsp |
+| setup-tide-mode | evil-collection-typescript-mode-set-evil-shift-width | lsp |
 
 ** Typescript
 
@@ -1105,10 +1355,11 @@ Functions for use in the general keybinding section
   (typescript-mode . setup-tide-mode))
     :config
     (setq typescript-indent-level 2))
+(lsp-make-interactive-code-action organize-imports "source.organizeImports.ts-ls")
 #+end_src
 
 #+RESULTS:
-| jest-test-mode | lsp-deferred | setup-tide-mode | evil-collection-typescript-mode-set-evil-shift-width | lsp |
+| lsp-deferred | setup-tide-mode | evil-collection-typescript-mode-set-evil-shift-width | lsp |
 
 ** Jest
 
@@ -1151,15 +1402,17 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
 #+end_src
 
 #+RESULTS:
-| web-mode | web-mode | web-mode | web-mode | web-mode | web-mode | web-mode | web-mode | typescript-mode |
+| web-mode | web-mode | typescript-mode |
 
 
 ** Json
 
 #+begin_src emacs-lisp
   (use-package json-mode)  
-  (use-package json)  
+  (use-package json)
 #+end_src
+
+#+RESULTS:
 
 ** Csv
 
@@ -1167,10 +1420,12 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
 (use-package csv-mode)
 #+end_src
 
+#+RESULTS:
+
 ** Prettier
 
 #+begin_src emacs-lisp
-    (require 'prettier-js)
+    (use-package prettier-js)
     (add-hook 'js2-mode-hook 'prettier-js-mode)
     (add-hook 'js-mode-hook 'prettier-js-mode)
     (remove-hook 'js-mode-hook 'prettier-js-mode)
@@ -1178,59 +1433,112 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
     (setq prettier-js-args '(
     "--trailing-comma" "es5"
     "--bracket-spacing" "true"
+    "--print-width" "120"
     "--tab-width" "2"
   ))
 #+end_src
+
+#+RESULTS:
+| --trailing-comma | es5 | --bracket-spacing | true | --tab-width | 4 |
 
 ** YAML
 #+begin_src emacs-lisp
 (use-package yaml-mode)
 #+end_src
 
+#+RESULTS:
+
 ** Java
 
 #+begin_src emacs-lisp
-(use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+(use-package lsp-java
+  :config
+  (add-hook 'java-mode-hook 'lsp)
+  (setq lsp-java-vmargs
+        (list
+         "-Xmx4G"
+         "-XX:+UseG1GC"
+         "-XX:+UseStringDeduplication"
+         ;; Download lombok.jar from https://projectlombok.org/download and put it at this path
+         "-javaagent:/Users/adammabd/.emacs.d/lombok.jar"))
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.bemol\\'")
+  (setq lsp-java-project-resource-filters ["node_modules" ".metadata" "archetype-resources" "META-INF/maven" "runtime" "env"]))
 (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
 #+end_src
+
+#+RESULTS:
+: t
 
 ** Kotlin
 
 #+begin_src emacs-lisp
-(use-package kotlin-mode :config (add-hook 'kotlin-mode-hook 'lsp))
+(use-package kotlin-mode
+  :after (lsp-mode dap-mode)
+  :config
+    (add-hook 'kotlin-mode-hook 'lsp)
+    ;(require 'dap-kotlin)
+    (setq lsp-kotlin-compiler-jvm-target "1.8"))
+    ;(setq lsp-kotlin-debug-adapter-path (or (executable-find "kotlin-debug-adapter") ""))
+    ;(setq lsp-kotlin-debug-adapter-enabled t))
+
 #+end_src
+
+#+RESULTS:
+: t
 
 ** Lisp
 
 #+begin_src emacs-lisp
-  (setq inferior-lisp-program "sbcl")
+  (setq inferior-lisp-program "scheme")
   (use-package slime)
   (use-package paredit)
   (use-package redshank)
+  (global-set-key (kbd "M-.") 'paredit-forward-slurp-sexp)
+  (global-set-key (kbd "M-,") 'paredit-backward-slurp-sexp)
 #+end_src
 
 #+RESULTS:
+: paredit-backward-slurp-sexp
 
 
 ** Python
 
 #+begin_src emacs-lisp
+(defun abu/lsp-pyright-buffer-file-organize-imports ()
+  (interactive)
+  (lsp-send-execute-command "pyright.organizeimports"
+                            (vector (concat "file://" (buffer-file-name)))))
+
 (use-package lsp-pyright
   :ensure t
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
                          (lsp-deferred)))
   :init (when (executable-find "python3")
-          (setq lsp-pyright-python-executable-cmd "python3"))
-  )  
+          (setq lsp-pyright-python-executable-cmd "python3")))
+
+(use-package python-pytest)
 #+end_src
+
+#+RESULTS:
 
 ** Ruby
 
 #+begin_src emacs-lisp
     (use-package ruby-mode
       :hook (ruby-mode . lsp-deferred))
+(use-package ruby-test-mode)
 #+end_src
+
+** Go
+
+#+begin_src emacs-lisp
+(use-package go-mode
+  :hook (go-mode-hook . lsp-deferred))
+#+end_src
+
+#+RESULTS:
+| lsp-deferred | evil-collection-ruby-mode-set-evil-shift-width | doom-modeline-env-setup-ruby |
 
 ** Jinja2
 
@@ -1245,6 +1553,7 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
     (use-package company
       :after lsp-mode
       :hook ((lsp-mode . company-mode) (emacs-lisp-mode . company-mode))
+      :config (evil-define-key 'insert 'global (kbd "C-k") 'company-select-previous)
       :bind (:map company-active-map
 ;;              ("<tab>" . company-complete-selection)
               ("C-l" . company-complete-selection))
@@ -1257,7 +1566,7 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
       (setq company-tooltip-align-annotations t)
       (company-idle-delay 0.0))
     (use-package company-box)
-      ;:hook (company-mode . company-box-mode))
+      ;:hook (company-mode . company-box-mode)
   (global-set-key (kbd "C-c y") 'company-yasnippet)
 #+end_src
 
@@ -1307,7 +1616,7 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
   (use-package ace-jump-mode
       :bind
       (:map evil-normal-state-map
-            ("s" . ace-jump-mode)))
+            ("s" . ace-jump-char-mode)))
 #+end_src
 
 * Notifications
@@ -1347,7 +1656,9 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
       ;; (setq default-alert-style 'notifier)
       (setq org-alert-notification-title "Emacs Org")
       )
-(org-alert-enable)
+(org-alert-disable)
+
+;(org-alert-enable)
 #+end_src
 
 * Log files
@@ -1397,59 +1708,39 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
 
 * Custom scripts
 
+sometimes you just need these little helpers :
 #+begin_src emacs-lisp
-(defun get-crux-link (should-open-link)
-  "Get the CRUX line link for a specific file"
-  (interactive "cOpen link? [y/n] ")
-  (let* ((file-name-with-path (get-file-name-with-path))
-         (project-name (projectile-project-name))
-         (file-name (get-file-name-with-project-path file-name-with-path project-name))
-         (line-numbers (get-line-numbers))
-         (file-name-with-line-numbers (format "%s#%s" file-name line-numbers))
-         (uncleaned-newest-commit-for-file (get-newest-commit))
-         (newest-commit-for-file (string-remove-prefix "commit " uncleaned-newest-commit-for-file))
-         (crux-formatted-link (format "https://code.amazon.com/packages/%s/blobs/%s/--/%s" project-name newest-commit-for-file file-name-with-line-numbers)))
-    (if (equal (downcase should-open-link) ?y)
-        (browse-url crux-formatted-link)
-      (kill-new crux-formatted-link))
-    ))
+(defun find-nth-occurrence (needle haystack n)
+  (if (> n (length haystack))
+      (error "N was larger than the length of HAYSTACK: %s!" haystack)
+  (let ((haystack-list (string-to-list haystack))
+        (nth-occurrence 0))
+    (seq-do-indexed (lambda (char idx)
+                      (setq char-string (char-to-string char))
+                      (if (string-equal needle char-string)
+                          (progn
+                            (message "HERE")
+                            (setq nth-occurrence (+ 1 nth-occurrence))
+                            (if (equalp nth-occurrence n)
+                                (message "HELLO %s" idx)))))
+                    haystack))))
 
-(define-advice browse-url-default-macosx-browser 
-    (:around (orig-fun &rest args) browse-url-without-encoding-url)
-  (message "Browse url called with args %S" args)
-  (setq url (car args))
-  (message "Opening url: %s" url)
-  (setq process-object (start-process (concat "open " url) nil "open" "-u" url))
-  (process-status process-object))
 
-(setq process-object (start-process "ls test" nil "ls" "-lah"))
-(message "%S" process-object)
-(type-of process-object)
-(process-status process-object)
+	(defun find-last-occurrence (needle haystack)
+		"Find the index of the last occurrence of NEEDLE in HAYSTACK. Returns `nil' if NEEDLE was not found."
+		(let ((haystack-list (string-to-list haystack))
+					(index nil))
+			(seq-do-indexed #'(lambda (char idx)
+												(setq char-string (char-to-string char))
+												(if (string-equal needle char-string)
+														(setq index idx)))
+											haystack)
+			index))
 
-(defun get-file-name-with-path ()
-  (buffer-file-name (window-buffer (minibuffer-selected-window))))
-
-(defun get-file-name-with-project-path (file-name-with-path project-name)
-  (let ((file-name-with-full-project-path (substring file-name-with-path (+ (length "src/") (s-index-of "src" file-name-with-path)))))
-    (string-remove-prefix "/" (substring file-name-with-full-project-path (+ (length project-name) (s-index-of project-name file-name-with-full-project-path))))))
-
-(defun get-line-numbers ()
-  (let* ((line-number-of-start (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-beginning) 1)))))
-         (line-number-of-end (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-end) 1))))))
-    (message line-number-of-start)
-    (message line-number-of-end)
-    (if (equal line-number-of-start line-number-of-end)
-        (message "L%s" line-number-of-start)
-      (message "L%s-L%s" line-number-of-start line-number-of-end))))
-
-(defun get-newest-commit ()
-  (string-trim-right (shell-command-to-string (format "git log -- %s | head -n 1" file-name-with-path))))
-
-(abu/leader-keys
-  "c" '(:ignore t :which-key "Code")
-  "cL" '(get-crux-link :which-key "Open CRUX link"))
+; (find-nth-occurrence "." "com.amazon.stuff.more" 3)
+; (find-last-occurrence "." "com.amazon.stuff.more")
 #+end_src
+
 
 #+begin_src emacs-lisp
 (defun abu/toggle-org-emphasis-markers ()
@@ -1467,59 +1758,6 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
   "oe" '(abu/toggle-org-emphasis-markers :which-key "Toggle Org emphasis markers")) 
 #+end_src
 
-* Custom hydras and transients
-#+begin_src emacs-lisp
-(defun cut-cr (&optional args)
-  (interactive
-   (list (transient-args 'transient-crux-cut-cr)))
-   (setq args-string (mapconcat 'identity args " "))
-   (async-shell-command (format "cr %s" args-string)))
-
-(defun get-branch (&optional args)
-  (interactive
-   (list (transient-args 'transient-crux-cut-cr)))
-  (setq selected-branch "")
-  (setq final-operation "")
-  (setq supported-args '("--parent" "--destination-branch"))
-  (dolist (supported-arg supported-args)
-    (if (member supported-arg args)
-        (progn
-          (setq selected-branch (magit-read-other-branch-or-commit "Find branch or commit"))
-          (setq final-operation supported-arg))))
-  (format "%s %s" final-operation selected-branch))
-
-(member "test" '("test" "another test"))
-
-(transient-define-argument transient-crux-cut-cr:--*-reviewers ()
-  :description "Reviewers of the form <user> or <type>:<id>[:<count>] (types are: user, posix, ldap, team)"
-  :class 'transient-switches
-  :key "-R"
-  :argument-format "--reviewers=%s"
-  ;:argument "--reviewers="
-  :argument-regexp "*"
-  :choices '("team:EC2 Shield" "team:EC2 Shield,briangrg"))
-
-(define-transient-command transient-crux-cut-cr ()
-  "Cut a CR"
-   ["Switches"
-   ("-a" "Includes all modified packages in your workspace" "--all")
-   ("-n" "Includes all modified packages in your workspace" "--new-review")
-    ]
-   ["Common options"
-    ("-i" "Packages and commit ranges to include in the review" "--include=")
-    ("-u" "Updates the given code review rather than making a new one" "--update-review=")
-    ("-p" "Code review the range of REF..HEAD" "--parent=")
-    ("-r" "Code review the range of FROM..TO" "--range=")
-    ("-d" "Name of branch where changes shall eventually be merged into" "--destination-branch=")
-    (transient-crux-cut-cr:--*-reviewers)
-    ]
-   ["Cut CR"
-    ("n" "Cut CR" cut-cr)
-    ])
-
-(abu/leader-keys
-  "cC" '(transient-crux-cut-cr :which-key "Cut CRUX CR"))
-#+end_src
 
 * Elfeed (rss)
 
@@ -1528,12 +1766,15 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
   :init
   (setq elfeed-curl-program-name "curl")
   :config
-  (setq elfeed-feeds '(
-     "https://brooker.co.za/blog/rss.xml"
-     "https://lukesmith.xyz/index.xml"
-     "https://planet.emacslife.com")))
+  (setq elfeed-feeds '("https://brooker.co.za/blog/rss.xml"
+                       "https://lukesmith.xyz/index.xml"
+                       "https://planet.emacslife.com"
+                       "https://news.ycombinator.com/rss")))
 
 #+end_src
+
+#+RESULTS:
+: t
 
 * Dash (dev docs)
 
@@ -1541,3 +1782,487 @@ Found the following at https://willschenk.com/articles/2021/setting_up_emacs_for
 (use-package dash-at-point)
 #+end_src
 
+
+
+#+RESULTS:
+
+* Email (mu4e)
+ 
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
+(add-to-list 'exec-path "/usr/local/bin/mu")
+(setq mu4e-mu-binary "/usr/local/bin/mu")
+(setq mail-user-agent 'mu4e-user-agent)
+
+(with-eval-after-load 'mu4e
+  (setq mu4e-get-mail-command "offlineimap -o")
+  (setq mu4e-update-interval (* 60 5))
+  (setq mu4e-completing-read-function #'ivy-completing-read)
+  (setq mu4e-mu-home "/Users/adammabd/.cache/mu/")
+  (setq mu4e-sent-folder "/Sent Items"))
+
+;; defvar-1 issue below
+;;(require 'mu4e)
+
+;; Show an email alert on my modeline
+(use-package mu4e-alert
+  :after mu4e
+  :init
+  (mu4e-alert-enable-mode-line-display)
+  (mu4e-alert-enable-notifications)
+  (setq mu4e-alert-interesting-mail-query
+        (concat
+         "flag:unread maildir:/INBOX "
+         ))
+  (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
+
+;; Be able to send org-documents as email
+(use-package org-msg
+  :init
+  (setq mail-user-agent 'mu4e-user-agent)
+  (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
+        org-msg-startup "hidestars indent inlineimages"
+        org-msg-default-alternatives '((new		. (text html))
+				                               (reply-to-html	. (text html))
+				                               (reply-to-text	. (text)))
+        org-msg-convert-citation t)
+  (org-msg-mode))
+
+;; customize mu4e xwidget browsing
+(use-package mu4e-views
+  :after mu4e
+  :defer nil
+  ;; :bind (:map mu4e-headers-mode-map
+	;;     ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
+	;;     ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
+	;;     ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
+  ;;       ("f" . mu4e-views-toggle-auto-view-selected-message) ;; toggle opening messages automatically when moving in the headers view
+  ;;       ("i" . mu4e-views-mu4e-view-as-nonblocked-html) ;; show currently selected email with all remote content
+	;;     )
+  :config
+  (setq mu4e-views-completion-method 'ivy) ;; use ivy for completion
+  (setq mu4e-views-default-view-method "html") ;; make xwidgets default
+  (mu4e-views-mu4e-use-view-msg-method "html") ;; select the default
+  (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
+  (setq mu4e-views-auto-view-selected-message t)
+  (setq xwidget-webkit-enable-plugins 't)) ;; automatically open messages when moving in the headers view
+
+
+;;; ---- ;;;
+(defun abu/mu4e-action-view-in-xwidget (msg)
+  "Show current MSG in an embedded xwidget, if available."
+  (unless (fboundp 'xwidget-webkit-browse-url)
+    (mu4e-error "No xwidget support available"))
+  (let ((browse-url-handlers nil)
+        (browse-url-browser-function
+         (lambda (url &optional _rest)
+           (xwidget-webkit-browse-url url))))
+    (mu4e-action-view-in-browser msg)))
+
+;; My specific config
+(setq user-full-name "Abdullah Adam")
+(setq user-mail-address "adammabd@amazon.com")
+(setq mail-default-headers "Reply-to: adammabd@amazon.com")
+
+(setq send-mail-function 'smtpmail-send-it
+      user-full-name "Abdullah Adam"
+      user-mail-address "adammabd@amazon.com"
+      smtpmail-default-smtp-server "ballard.amazon.com"
+      smtpmail-local-domain "amazon.com"
+      smtpmail-smtp-user "ANT\\adammabd"
+      smtpmail-smtp-server "ballard.amazon.com"
+      smtpmail-stream-type 'starttls
+      smtpmail-smtp-service 1587)
+
+(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
+(abu/leader-keys
+  "m" '(:ignore t :which-key "mu4e")
+  "mm" '(mu4e :which-key "mu4e"))
+
+* wgrep edit occur
+#+begin_src emacs-lisp
+(use-package wgrep)
+#+end_src
+
+* Compilation mode
+#+begin_src emacs-lisp
+(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+#+end_src
+
+** Org Agenda customizations
+
+#+begin_src emacs-lisp
+;; (setq org-agenda-custom-commands
+;;       '(("n" "Agenda and all TODOs"
+;;          ((agenda "")
+;;           (alltodo "")))))
+
+;; (setq org-agenda-custom-commands
+;;       '(
+;;         ("D" "Demo block agenda"
+;;          ((todo "PENDING"
+;;                 ((org-agenda-overriding-header "⏳ Pending Tasks")))
+;;           (agenda ""
+;;                   (
+;;                    ;;(org-agenda-block-separator ?+)
+;;                    (org-agenda-span 'day)
+;;                    (org-deadline-warning-days 3)
+;;                    (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+;;                    (org-agenda-fontify-priorities t)
+;;                    (org-agenda-overriding-header "\n📖 Daily Agenda\n")))))
+;;         ))
+
+
+;; This is the expanded view of my code (which is further below):
+(setq org-agenda-custom-commands
+      `(("A" "Daily agenda and top priority tasks"
+         ((tags-todo "*"
+                     ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+                      (org-agenda-skip-function
+                       `(org-agenda-skip-entry-if
+                         'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+                      (org-agenda-block-separator nil)
+                      (org-agenda-overriding-header "Important tasks without a date\n")))
+          (agenda "" ((org-agenda-span 1)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-scheduled-past-days 0)
+                      ;; We don't need the `org-agenda-date-today'
+                      ;; highlight because that only has a practical
+                      ;; utility in multi-day views.
+                      (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                      (org-agenda-format-date "%A %-e %B %Y")
+                      (org-agenda-overriding-header "\nToday's agenda\n")))
+          (agenda "" ((org-agenda-start-on-weekday nil)
+                      (org-agenda-start-day "+1d")
+                      (org-agenda-span 3)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nNext three days\n")))
+          (agenda "" ((org-agenda-time-grid nil)
+                      (org-agenda-start-on-weekday nil)
+                      ;; We don't want to replicate the previous section's
+                      ;; three days, so we start counting from the day after.
+                      (org-agenda-start-day "+4d")
+                      (org-agenda-span 14)
+                      (org-agenda-show-all-dates nil)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-entry-types '(:deadline))
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n")))))
+        ("P" "Plain text daily agenda and top priorities"
+         ((tags-todo "*"
+                     ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+                      (org-agenda-skip-function
+                       `(org-agenda-skip-entry-if
+                         'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+                      (org-agenda-block-separator nil)
+                      (org-agenda-overriding-header "Important tasks without a date\n")))
+          (agenda "" ((org-agenda-span 1)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-scheduled-past-days 0)
+                      ;; We don't need the `org-agenda-date-today'
+                      ;; highlight because that only has a practical
+                      ;; utility in multi-day views.
+                      (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                      (org-agenda-format-date "%A %-e %B %Y")
+                      (org-agenda-overriding-header "\nToday's agenda\n")))
+          (agenda "" ((org-agenda-start-on-weekday nil)
+                      (org-agenda-start-day "+1d")
+                      (org-agenda-span 3)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nNext three days\n")))
+          (agenda "" ((org-agenda-time-grid nil)
+                      (org-agenda-start-on-weekday nil)
+                      ;; We don't want to replicate the previous section's
+                      ;; three days, so we start counting from the day after.
+                      (org-agenda-start-day "+4d")
+                      (org-agenda-span 14)
+                      (org-agenda-show-all-dates nil)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-block-separator nil)
+                      (org-agenda-entry-types '(:deadline))
+                      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                      (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n"))))
+         ((org-agenda-with-colors nil)
+          (org-agenda-prefix-format "%t %s")
+          (org-agenda-current-time-string ,(car (last org-agenda-time-grid)))
+          (org-agenda-fontify-priorities nil)
+          (org-agenda-remove-tags t))
+         ("agenda.txt"))))
+
+
+
+;; And this is what I actually use.  The `defvar' is stored in my
+;; prot-org.el file.  In the video I explain why I use this style.
+
+(defvar prot-org-custom-daily-agenda
+  ;; NOTE 2021-12-08: Specifying a match like the following does not
+  ;; work.
+  ;;
+  ;; tags-todo "+PRIORITY=\"A\""
+  ;;
+  ;; So we match everything and then skip entries with
+  ;; `org-agenda-skip-function'.
+  `((tags-todo "*"
+               ((org-agenda-skip-function '(org-agenda-skip-if nil '(timestamp)))
+                (org-agenda-skip-function
+                 `(org-agenda-skip-entry-if
+                   'notregexp ,(format "\\[#%s\\]" (char-to-string org-priority-highest))))
+                (org-agenda-block-separator nil)
+                (org-agenda-overriding-header "Important tasks without a date\n")))
+    (agenda "" ((org-agenda-span 1)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-scheduled-past-days 0)
+                ;; We don't need the `org-agenda-date-today'
+                ;; highlight because that only has a practical
+                ;; utility in multi-day views.
+                (org-agenda-day-face-function (lambda (date) 'org-agenda-date))
+                (org-agenda-format-date "%A %-e %B %Y")
+                (org-agenda-overriding-header "\nToday's agenda\n")))
+    (agenda "" ((org-agenda-start-on-weekday nil)
+                (org-agenda-start-day "+1d")
+                (org-agenda-span 3)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                (org-agenda-overriding-header "\nNext three days\n")))
+    (agenda "" ((org-agenda-time-grid nil)
+                (org-agenda-start-on-weekday nil)
+                ;; We don't want to replicate the previous section's
+                ;; three days, so we start counting from the day after.
+                (org-agenda-start-day "+4d")
+                (org-agenda-span 14)
+                (org-agenda-show-all-dates nil)
+                (org-deadline-warning-days 0)
+                (org-agenda-block-separator nil)
+                (org-agenda-entry-types '(:deadline))
+                (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                (org-agenda-overriding-header "\nUpcoming deadlines (+14d)\n"))))
+  "Custom agenda for use in `org-agenda-custom-commands'.")
+
+(setq org-agenda-custom-commands
+      `(("A" "Daily agenda and top priority tasks"
+         ,prot-org-custom-daily-agenda)
+        ("P" "Plain text daily agenda and top priorities"
+         ,prot-org-custom-daily-agenda
+         ((org-agenda-with-colors nil)
+          (org-agenda-prefix-format "%t %s")
+          (org-agenda-current-time-string ,(car (last org-agenda-time-grid)))
+          (org-agenda-fontify-priorities nil)
+          (org-agenda-remove-tags t))
+         ("agenda.txt"))))
+#+end_src
+
+
+ORG LATEX
+#+begin_src emacs-lisp
+;; https://emacs.stackexchange.com/questions/33010/how-to-word-wrap-within-code-blocks
+(setq org-latex-listings t)  ;; Ensure LaTeX listings is enabled
+
+;; Custom LaTeX options for source blocks
+(setq org-latex-packages-alist
+      '(("latex" "listings" nil)))  ;; Ensure the listings package is loaded
+
+(setq org-latex-default-packages-alist
+      (append org-latex-default-packages-alist
+              '(("listings" "utf8" nil))))  ;; Add listings package support
+
+(setq org-latex-src-block-backend 'minted)
+(setq org-latex-minted-options '(("breaklines" "true")
+                                 ("frame" "single")   ;; Adds a frame around code blocks (optional)
+                                 ("fontsize" "\\small") ;; Change the font size of code blocks
+                                 ("linenos" "true")   ;; Add line numbers to code blocks (optional)
+                                 ("fontfamily" "pcr")
+                                 ("breakanywhere" "true")))
+(setq org-latex-header-extra
+      '("\\renewcommand{\\ttdefault}{pcr}"))
+(setq org-latex-listings-options
+      '(("basicstyle" "\\pcr")  ;; Set the font style to typewriter
+        ("numbers" "left")           ;; Show line numbers on the left (optional)
+        ("frame" "single")))         ;; Add a frame around code blocks (optional)
+#+end_src
+
+#+RESULTS:
+| basicstyle | \pcr   |
+| numbers    | left   |
+| frame      | single |
+
+
+* Tramp remote ssh
+
+#+begin_src emacs-lisp
+(message "HELLO TRAMP SSH!!!")
+(customize-set-variable
+ 'tramp-ssh-controlmaster-options "-o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=yes")
+#+end_src
+
+#+RESULTS:
+: -o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=yes
+
+
+** Buttercup unit tests
+
+#+begin_src emacs-lisp
+(use-package buttercup)
+#+end_src
+
+* UML
+** Plant UML
+#+begin_src emacs-lisp
+(use-package plantuml-mode
+  :config
+  ;; Sample jar configuration
+  (setq plantuml-jar-path "/Users/adammabd/.emacs.d/plantuml-1.2023.10.jar")
+  (setq plantuml-default-exec-mode 'jar)
+  (add-to-list
+   'org-src-lang-modes '("plantuml" . plantuml)))
+#+end_src
+
+* URL
+** Postman like rest client
+
+#+begin_src emacs-lisp
+(use-package ob-restclient)
+(use-package company-restclient)
+(use-package restclient)
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((restclient . t)
+   (emacs-lisp . t)
+   (shell . t)
+   (python . t)))
+
+(add-to-list 'company-backends 'company-restclient)
+#+end_src
+
+#+begin_src python
+import matplotlib, numpy
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+fig=plt.figure(figsize=(4,2))
+x=numpy.linspace(-15,15)
+plt.plot(numpy.sin(x)/x)
+fig.tight_layout()
+plt.savefig('images/python-matplot-fig.png')
+return 'images/python-matplot-fig.png' # return filename to org-mode
+
+#+end_src
+
+#+RESULTS:
+
+
+#+begin_src restclient
+#GET https://jsonplaceholder.typicode.com/todos/1
+#+end_src
+
+
+* Utils
+** Interactive function to convert Epoch time to timestamp
+#+begin_src emacs-lisp
+(defun get-time-from-epoch-time (epoch-time)
+  (interactive "sEnter epoch time: ")
+  (let ((epoch-time-decimal-index (cl-search "." epoch-time)))
+    (if epoch-time-decimal-index
+        (message (format-time-string "<%Y-%m-%d %a %H:%M:%S>" (seconds-to-time (string-to-number (substring epoch-time nil epoch-time-decimal-index))) t))
+      (message (format-time-string "<%Y-%m-%d %a %H:%M:%S>" (seconds-to-time (string-to-number epoch-time)) t)))))
+#+end_src
+
+
+* YAML
+#+begin_src emacs-lisp
+(use-package yaml)
+#+end_src
+
+
+* browse url
+
+#+begin_src emacs-lisp
+(setq abu/browse-url-using-id-options (list ?t ?w ?c))
+
+(defun abu/browse-url-using-id (url-type)
+  (interactive "cWhat kind of url [t/w/c]: ")
+  (let ((url (thing-at-point 'symbol t)))
+    (if (and url (abu/browse-url-using-id--validate-url-type url-type))
+        (abu/browse-url-using-id--internal url url-type)
+      (error "No URL found"))))
+
+(defun abu/browse-url-using-id--validate-url-type (url-type)
+  (let ((case-fold-search t))
+    (seq-filter #'(lambda (elt)
+                    (char-equal elt url-type))
+                abu/browse-url-using-id-options)))
+
+(defun abu/browse-url-using-id--internal (url url-type)
+  (cond ((char-equal ?t url-type) (browse-url (format "https://t.corp.amazon.com/%s" url)))
+        (t (error "URL type: '%s' is unsupported" (char-to-string url-type)))))
+
+ (abu/leader-keys
+ "gx" '(abu/browse-url-using-id :which-key "Browse URL using ID"))
+#+end_src
+
+* Docker
+
+#+begin_src emacs-lisp
+(use-package dockerfile-mode)
+#+end_src
+
+
+* General Tweaks
+
+#+begin_src emacs-lisp
+  ;; set timezone
+  (setenv "TZ" "Africa/Harare")
+  (use-package exec-path-from-shell
+     :config (exec-path-from-shell-initialize))
+  (setq scroll-margin 8)
+  (setq scroll-conservatively 101)
+  (setq scroll-step 1)
+  (setq visual-bell t)
+  (menu-bar-mode -1)
+  (setq ring-bell-function 'ignore)
+  (setq markdown-max-image-size '(450 . 450))
+  (setq toggle-truncate-lines 1)
+  (electric-pair-mode 1)
+  (blink-cursor-mode -1)
+  (global-diff-hl-mode 1)
+  (global-set-key [S-wheel-right] 'scroll-left)
+  (global-set-key [S-wheel-left] 'scroll-right)
+  (add-to-list 'exec-path "/Users/adammabd/.local/bin/q")
+  (add-to-list 'exec-path "~/Documents/kotlin-language-server/server/build/install/server/bin")
+  (add-to-list 'exec-path "~/Documents/kotlin-debug-adapter/adapter/build/install/adapter/bin")
+  (add-to-list 'exec-path "~/Documents/kotlin-debug-adapter/adapter/build/install/adapter/bin")
+  (add-to-list 'exec-path "/Users/adammabd/.rbenv/shims/solargraph")
+
+  (add-to-list 'exec-path "$HOME/.cargo/env")
+  (setq exec-path (append exec-path '("/Users/adammabd/.nvm/versions/node/v17.2.0/bin")))
+  (setq warning-suppress-types '(yasnippet backquote-change))
+#+end_src
+
+#+RESULTS:
+| yasnippet | backquote-change |
+
+** Info mode tweaks
+
+#+begin_src emacs-lisp
+(add-hook 'Info-mode-hook
+          (lambda () (set (make-local-variable 'visual-fill-column-width) 90)))
+;(push "/Users/adammabd/Downloads/sicp.info" Info-additional-directory-list)
+;(push "/usr/local/share/info/emacs" Info-additional-directory-list)
+;(push "/usr/local/share/info" Info-additional-directory-list)
+#+end_src
+
+#+RESULTS:
+| /Users/adammabd/Downloads/sicp.info | /Users/adammabd/Downloads/sicp.info |
+
+** super user (sudo) rights
+
+#+begin_src emacs-lisp
+(use-package sudo-edit)
+#+end_src
