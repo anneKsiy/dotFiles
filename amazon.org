@@ -1,0 +1,759 @@
+#+TITLE: anneKsiy's  Amazon emacs org config
+#+AUTHOR: Abdullah "anneKsiy" Adam
+
+* Amazon configuration
+** Setting mcurl args
+#+begin_src emacs-lisp
+;;(setq amz-coral-midway-aware-curl-args
+  ;;'("--negotiate" "-L" "--cookie" "/Users/adammabd/.midway/cookie" "--cookie-jar" "/Users/adammabd/.midway/cookie"))
+(setq amz-coral-midway-aware-curl-args '("-L" "--cookie" "/Users/adammabd/.midway/cookie" "--cookie-jar" "/Users/adammabd/.midway/cookie"))
+;; Original Value
+;; ("--negotiate" "-u:" "-L" "--cookie" "/Users/adammabd/.midway/cookie" "--cookie-jar" "/Users/adammabd/.midway/cookie")
+#+end_src
+
+#+begin_src emacs-lisp
+(setq xwidget-webkit-cookie-file "/Users/adammabd/.midway/cookie")
+(setq url-redirect-buffer nil)
+
+;; (shell-command "mcurl https://badges.corp.amazon.com/ripv2/IAD.svg")
+;;(setq url-cookie-trusted-urls ".*")
+;; (switch-to-buffer
+;;  (let ((url-redirect-buffer "*test url*"))
+;;    (url-retrieve
+;;     "https://badges.corp.amazon.com/ripv2/IAD.svg"
+;;                                         ;"https://github.com/emacs-mirror/emacs/blob/master/lisp/url/url-cookie.el"
+;;     #'(lambda (status) (abu/print-plist status)))))
+
+
+(defun abu/print-plist (plist) 
+  (-map-indexed #'(lambda (idx it)
+                    (when (evenp idx)
+                      (print (format "%s-> %s" it (plist-get plist it)))))
+                plist))
+#+end_src
+* Amazon packages
+** EmacsAmazonLib
+
+#+begin_src emacs-lisp
+(straight-use-package '(amz-brazil-config
+                        :type git
+                        :build t
+                        :post-build
+                        (copy-file "lisp/brazil-path-cache-artifacts" (straight--build-dir "amz-brazil-config"))
+                        :repo "ssh://git.amazon.com/pkg/EmacsAmazonLibs"))
+#+end_src
+
+* Amazon scripts
+
+** Easier code searching
+#+begin_src emacs-lisp
+(defun abu/search-for-class-or-interface (search-string search-type)
+  "Allows you to easily search for SEARCH_STRING given a SEARCH_TYPE. Expects a SEARCH_STRING in the format of a java import
+such as `import com.amazon.aes.webservices.util.AWSAuthHelper;' where `AWSAuthHelper' will be searched in the package
+`com.amazon.aes.webservices.util'"
+  (interactive "sSearch string: \nc[C]lass or [I]nterface? ")
+  (setq search-string (string-trim search-string))
+  (setq search-string (string-remove-prefix "import" search-string))
+  (setq search-string (string-remove-suffix ";" search-string))
+  (setq search-string (string-trim search-string))
+
+  (let* ((index-of-last-period (find-last-occurrence "." search-string))
+         (url-prefix "https://code.amazon.com/search?term=")
+         (package-path (url-encode-url (concat "'package " (substring search-string 0 index-of-last-period) "'")))
+         (subject-name (substring search-string (+ 1 index-of-last-period))))
+    (cond
+     ((char-equal (downcase search-type) ?c) (setq subject-name (url-encode-url (concat "'class " subject-name "'"))))
+     ((char-equal (downcase search-type) ?i) (setq subject-name (url-encode-url (concat "'interface " subject-name "'"))))
+     (t (error "Invalid input! Expected input to be [C]lass or [I]nterface...")))
+    (message "%s" (format "%s%s+%s" url-prefix package-path subject-name))
+    (browse-url (format "%s%s+%s" url-prefix package-path subject-name))))
+
+(abu/leader-keys
+  "c/" '(abu/search-for-class-or-interface :which-key "Find class or interface"))
+#+end_src
+
+** Retrieving a crux code link
+#+begin_src emacs-lisp
+
+;; (defun get-crux-link (should-open-link)
+;;   "Get the CRUX line link for a specific file"
+;;   (interactive "cOpen link? [y/n] ")
+;;   (let* ((file-name-with-path (get-file-name-with-path))
+;;          (project-name (projectile-project-name))
+;;          (file-name (get-file-name-with-project-path file-name-with-path project-name))
+;;          (line-numbers (get-line-numbers))
+;;          (file-name-with-line-numbers (format "%s#%s" file-name line-numbers))
+;;          (uncleaned-newest-commit-for-file (get-newest-commit))
+;;          (newest-commit-for-file (string-remove-prefix "commit " uncleaned-newest-commit-for-file))
+;;          (crux-formatted-link (format "https://code.amazon.com/packages/%s/blobs/%s/--/%s" project-name newest-commit-for-file file-name-with-line-numbers)))
+;;     (if (equal (downcase should-open-link) ?y)
+;;         (browse-url crux-formatted-link)
+;;       (kill-new crux-formatted-link))
+;;     ))
+
+;; (define-advice browse-url-default-macosx-browser 
+;;     (:around (orig-fun &rest args) browse-url-without-encoding-url)
+;;   (message "Browse url called with args %S" args)
+;;   (setq url (car args))
+;;   (message "Opening url: %s" url)
+;;   (setq process-object (start-process (concat "open " url) nil "open" "-u" url))
+;;   (process-status process-object))
+
+;; (defun get-file-name-with-path ()
+;;   (buffer-file-name (window-buffer (minibuffer-selected-window))))
+
+;; (defun get-file-name-with-project-path (file-name-with-path project-name)
+;;   (let ((file-name-with-full-project-path (substring file-name-with-path (+ (length "src/") (s-index-of "src" file-name-with-path)))))
+;;     (string-remove-prefix "/" (substring file-name-with-full-project-path (+ (length project-name) (s-index-of project-name file-name-with-full-project-path))))))
+
+;; (defun get-line-numbers ()
+;;   (let* ((line-number-of-start (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-beginning) 1)))))
+;;          (line-number-of-end (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-end) 1))))))
+;;     (message line-number-of-start)
+;;     (message line-number-of-end)
+;;     (if (equal line-number-of-start line-number-of-end)
+;;         (message "L%s" line-number-of-start)
+;;       (message "L%s-L%s" line-number-of-start line-number-of-end))))
+
+;; (defun get-newest-commit ()
+;;   (string-trim-right (shell-command-to-string (format "git log -- %s | head -n 1" file-name-with-path))))
+
+(defun get-crux-link (should-open-link)
+  "Get the CRUX line link for a specific file"
+  (interactive "cOpen link? [y/n] ")
+  (let* ((file-name-with-path (get-file-name-with-path))
+         (project-name (projectile-project-name))
+         (file-name (get-file-name-with-project-path file-name-with-path project-name))
+         (line-numbers (get-line-numbers))
+         (file-name-with-line-numbers (format "%s#%s" file-name line-numbers))
+         (uncleaned-newest-commit-for-file (get-newest-commit))
+         (newest-commit-for-file (string-remove-prefix "commit " uncleaned-newest-commit-for-file))
+         (crux-formatted-link (format "https://code.amazon.com/packages/%s/blobs/%s/--/%s" project-name newest-commit-for-file file-name-with-line-numbers)))
+    (if (equal (downcase should-open-link) ?y)
+        (browse-url crux-formatted-link)
+      (kill-new crux-formatted-link))
+    ))
+
+(define-advice browse-url-default-macosx-browser 
+    (:around (orig-fun &rest args) browse-url-without-encoding-url)
+  (message "Browse url called with args %S" args)
+  (setq url (car args))
+  (message "Opening url: %s" url)
+  (setq process-object (start-process (concat "open " url) nil "open" "-u" url))
+  (process-status process-object))
+
+(defun get-file-name-with-path ()
+  (buffer-file-name (window-buffer (minibuffer-selected-window))))
+
+(defun get-file-name-with-project-path (file-name-with-path project-name)
+  (let ((file-name-with-full-project-path (substring file-name-with-path (+ (length "src/") (s-index-of "src" file-name-with-path)))))
+    (string-remove-prefix "/" (substring file-name-with-full-project-path (+ (length project-name) (s-index-of project-name file-name-with-full-project-path))))))
+
+(defun get-line-numbers ()
+  (let* ((line-number-of-start (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-beginning) 1)))))
+         (line-number-of-end (string-remove-prefix "-" (number-to-string (- (line-number-at-pos (region-end) 1))))))
+    (message line-number-of-start)
+    (message line-number-of-end)
+    (if (equal line-number-of-start line-number-of-end)
+        (message "L%s" line-number-of-start)
+      (message "L%s-L%s" line-number-of-start line-number-of-end))))
+
+(defun get-newest-commit ()
+  (string-trim-right (shell-command-to-string (format "git log -- %s | head -n 1" file-name-with-path))))
+
+(abu/leader-keys
+  "c" '(:ignore t :which-key "Code")
+  "cL" '(get-crux-link :which-key "Open CRUX link"))
+#+end_src
+
+** Playing around with kerboros kinit and wiki
+#+begin_src emacs-lisp
+(define-advice url-retrieve 
+    (:around (orig-fun &rest args) url-retrieve-kcurl)
+  (message "url-retrieve called with %S" args)
+  (setq url (car args))
+  (if (cl-search "w.amazon.com" url)
+      (progn
+        (message "Using non-default kcurl")
+        (setq process-object (start-process (concat "kcurl " url) nil "kcurl" url))
+        (process-status process-object))
+    (message "Using default url-retrieve")
+    (url-retrieve-internal url callback (cons nil cbargs) silent
+			 inhibit-cookies)))
+(advice-remove 'url-retrieve 'url-retrieve@url-retrieve-kcurl)
+
+;; (define-advice url-retrieve 
+;;     (:around (orig-fun &rest args) url-retrieve-mcurl)
+;;   (message "url-retrieve called with %S" args)
+;;   (setq url (car args))
+;;   (if (cl-search "badges.corp.amazon.com" url)
+;;       (progn
+;;         (message "Using non-default mcurl")
+;;         (setq process-object (start-process (concat "mcurl " url) "*echo*" "mcurl" url))
+;;         (process-status process-object)
+;;         (process-live-p process-object))
+;;     (message "Using default url-retrieve")
+;;     (url-retrieve-internal url callback (cons nil cbargs) silent
+;; 			 inhibit-cookies)))
+
+(defun abu/test-sentinel (process event)
+  (print process)
+  (print event))
+(make-process :name "testing" :sentinel #'abu/test-sentinel :buffer "*echo*" :command (list "mcurl" "https://badges.corp.amazon.com/oncall/ec2-shield-primary.svg"))
+;; (let ((image (amzn-badges~get-image-from-buffer "*echo*")))
+;;   (with-current-buffer "*amzn-badges*"
+;;     (goto-char (point-max))
+;;     ;(kill-line)
+;;     (print image)
+;;     (insert-image image)))
+
+;(advice-remove #'url-retrieve #'url-retrieve@url-retrieve-mcurl)
+
+
+
+(setq process-object (start-process "ls test" nil "ls" "-lah"))
+(message "%S" process-object)
+(type-of process-object)
+(process-status process-object)
+
+;; cookies and url-retrieve url-http
+
+(setq url-cookie-trusted-urls ".*")
+
+
+#+end_src
+
+** Search for releases at code.amazon
+
+#+begin_src emacs-lisp
+(defun abu/go-releases (package-name)
+  (interactive "sPackage name: ")
+  (let ((search-url-format-string "https://code.amazon.com/packages/%s/releases"))
+    (browse-url (format search-url-format-string package-name))))
+
+(abu/leader-keys
+  "cr" '(abu/go-releases :which-key "Find releases for a package"))
+
+#+end_src
+
+** Tiny (minify URL)
+#+begin_src emacs-lisp
+(defun abu/tiny-url (url comment)
+  (interactive "sURL: \nsComment: ")
+  (url-retrieve
+   (concat "https://tiny.amazon.com/submit/url?name=" (url-encode-url url) "&comment=" comment)
+   #'abu/tiny-url--get-tinyfied-url-from-buffer))
+
+(defun abu/tiny-url--get-tinyfied-url-from-buffer (_status)
+  (let ((start-marker "  <a href=\"")
+        (end-marker "\"")
+        (start-point nil)
+        (end-point nil)
+        (url nil))
+    (with-current-buffer
+      (message (buffer-name))
+      (setq start-point (search-forward start-marker))
+      (setq end-point (- (search-forward end-marker) 1))
+      (kill-region start-point end-point))
+    (setq url (current-kill 0 t))
+    (message "Successfully retrieved tiny-fied URL: \"%s\"" url)))
+#+end_src
+
+* Coral
+** Isengard
+#+begin_src emacs-lisp
+(setq isengard-endpoints '((aws . "https://isengard-service.amazon.com")
+                           (aws-cn . "https://isengard-service.bjs.aws-border.com")
+                           (aws-us-gov . "https://isengard-service.pdt.amazon.com")
+                           (aws-iso . "https://isengard-service.dca.amazon.com")
+                           (aws-iso-b . "https://isengard-service.sc2s.sgov.gov")))
+
+
+(setq isengard-aws-account-id-keys '("ALL" "AWSAccountID" "Alias" "CTI" "Description" "Email" "FinancialOwner" "IsBindleManaged" "IsContingentAuthProtected" "IsPersonal" "LastBaselineTime" "LastBaselineUser" "Name" "PosixGroupOwner" "PrimaryOwner" "Status"))
+
+(defun abu/get-iseng-acc (account-identifier &optional it endpoint)
+  (interactive "sEnter account-identifier (email or accountID): ")
+  (let* ((attribute (if (interactive-p)
+                        (ivy-read "Enter the attribute you would like to retrieve from: " isengard-aws-account-id-keys)
+                      (if it
+                          it
+                        "ALL")))
+         (endpoint (if (interactive-p)
+                       (alist-get
+                        (intern (ivy-read "Enter the partition you would like to query Isengard in: " isengard-endpoints))
+                        isengard-endpoints)
+                     (if endpoint
+                         endpoint
+                       (alist-get 'aws isengard-endpoints))))
+         (trimmed-account-identifier (string-trim account-identifier))
+         (account-identifier-type (if (cl-search "@" account-identifier)
+                                      "Email"
+                                    "AWSAccountID"))
+         (account-alist (amz-coral-call-rpcv1-midway;amz-coral-call
+                         endpoint
+                         "com.amazon.isengard.coral"
+                         "IsengardService"
+                         "GetAWSAccount"
+                         `((,account-identifier-type . ,trimmed-account-identifier))
+                         t)))
+    (alist-get "AWSAccount" account-alist)
+    (cond
+     ((equal attribute "ALL") (message (json-encode account-alist)))
+     ((equal attribute "CTI") (message (concat
+                                        (alist-get 'Category (alist-get 'AWSAccount account-alist))
+                                        "/"
+                                        (alist-get 'Type (alist-get 'AWSAccount account-alist))
+                                        "/"
+                                        (alist-get 'Item (alist-get 'AWSAccount account-alist)))))
+     (t (message (alist-get (intern attribute) (alist-get 'AWSAccount account-alist)))))))
+
+(defun abu/get-isen-creds (account-id &optional rolename endpoint)
+  (interactive "sEnter the accountID: ")
+  (let* ((endpoint (if (interactive-p)
+                       (alist-get
+                        (intern (ivy-read "Enter the partition you would like to query Isengard in: " isengard-endpoints))
+                        isengard-endpoints)
+                     (if endpoint
+                         endpoint
+                       (alist-get 'aws isengard-endpoints))))
+         (rolename (if (interactive-p)
+                       (intern (ivy-read "Which role name would you like to retrieve creds for: " (abu/get-isen-creds--get-rolenames account-id endpoint)))))
+         (creds nil))
+    (message "Calling")
+    (setq creds (json-read-from-string
+                 (alist-get 'AssumeRoleResult
+                            (amz-coral-call;amz-coral-call-rpcv1-midway;
+                             endpoint
+                             "com.amazon.isengard.coral"
+                             "IsengardService"
+                             "GetAssumeRoleCredentials"
+                             `((AWSAccountID . ,account-id)
+                               (IAMRoleName . ,rolename))
+                             t))))
+    (print creds)
+    (print (json-serialize (alist-get 'credentials creds)))
+    (print (abu/get-isen-creds--format-creds-shell (alist-get 'credentials creds)))
+    (kill-new (abu/get-isen-creds--format-creds-shell (alist-get 'credentials creds)))))
+
+(defun abu/get-isen-creds--get-rolenames (account-id endpoint)
+  (coerce 
+   (alist-get 'IAMRoleNameList 
+                            (amz-coral-call;amz-coral-call-rpcv1-midway;
+               endpoint
+               "com.amazon.isengard.coral"
+               "IsengardService"
+               "ListIAMRoles"
+               `((AWSAccountID . ,account-id)
+                 (RoleType . "console"))
+               t))
+   'list))
+
+(defun abu/get-isen-creds--format-creds-shell (creds)
+  (let ((access-key (alist-get 'accessKeyId creds))
+        (secret-key (alist-get 'secretAccessKey creds))
+        (session-token (alist-get 'sessionToken creds)))
+    (format "
+export AWS_ACCESS_KEY_ID=%s
+export AWS_SECRET_ACCESS_KEY=%s
+export AWS_SESSION_TOKEN=%s
+" access-key secret-key session-token)))
+
+
+;(abu/get-isen-creds--get-rolenames "046360881221" "https://isengard-service.amazon.com/")
+
+
+(setq coral-services '(
+                       ReviewService (
+                                      assembly "com.amazon.review.coral"
+                                      operations (
+                                                  GetReview (
+                                                               inputs (
+                                                                       reviewId
+                                                                       )
+                                                               )
+                                                  GetUserInfo (
+                                                                 inputs ()
+                                                                 )
+                                                  )
+                                      endpoints (
+                                                 aws "https://api.us-east-2.consensus.a2z.com/"
+                                                 )
+
+                                      )
+                       IsengardService (
+                                        assembly "com.amazon.isengard.coral"
+                                        operations (
+                                                    GetAWSAccount (
+                                                                     exclusive-inputs (
+                                                                                       Email
+                                                                                       AWSAccountID
+                                                                                       )
+                                                                     )
+                                                    )
+                                        endpoints (
+                                                   aws  "https://isengard-service.amazon.com"
+                                                   aws-cn  "https://isengard-service.bjs.aws-border.com"
+                                                   aws-us-gov  "https://isengard-service.pdt.amazon.com"
+                                                   aws-iso  "https://isengard-service.dca.amazon.com"
+                                                   aws-iso-b  "https://isengard-service.sc2s.sgov.gov"
+                                                   aws-iso-f  "https://isengard-service.ale.aws-border.hci.ic.gov"
+                                                   )
+                                        )
+                       )
+      )
+
+(defun abu/call-coral-service ()
+  (interactive)
+  (let* ((service-name (ivy-read "Pick the coral service: " coral-services))
+         (service (plist-get coral-services (intern service-name)))
+         (assembly (plist-get service 'assembly))
+         (endpoint (plist-get (plist-get service 'endpoints) (intern (ivy-read "Enter the partition you would like to call Isengard in: " (plist-get service 'endpoints)))))
+
+         (operation-name (ivy-read "Enter the operation to call: " (plist-get service 'operations)))
+         (operation (plist-get (plist-get service 'operations) (intern operation-name)))
+
+         (inputs (plist-get operation 'inputs))
+         (input-argslist (abu/call-coral-service--expand-inputs inputs))
+         (exclusive-inputs (plist-get operation 'exclusive-inputs))
+         (exclusive-input-argslist (abu/call-coral-service--expand-inputs exclusive-inputs t))
+         (request-argslist (cl-concatenate 'list input-argslist exclusive-input-argslist))
+
+         (result (amz-coral-call-rpcv1-midway;amz-coral-call
+                         endpoint
+                         assembly
+                         service-name
+                         operation-name
+                         request-argslist
+                         t)))
+    (let ((fields-to-display (abu/call-coral-service--get-fields-to-display result)))
+      (if (equal fields-to-display "ALL")
+          (message "%s" result)
+        (abu/call-coral-service--print-selected-fields fields-to-display result)))))
+
+(defun abu/call-coral-service--expand-inputs (inputs &optional is-exclusive)
+  (let ((ivy-read-format-string (if is-exclusive
+                                    (format "Optionally enter input for exclusive input field '%s', all available inputs are '%s': " "%s" inputs)
+                                  "Enter input for input field '%s': ")))
+    (remove nil (cl-map 'list
+                        #'(lambda (input)
+                            (let ((value (ivy-read (format ivy-read-format-string input) '())))
+                              (if (string-empty-p value)
+                                  '()
+                                (cons input value))))
+                        inputs))))
+
+(defun abu/call-coral-service--get-fields-to-display (result)
+  (let ((fields-to-display '())
+        (fields (append (mapcar 'car result) '("ALL" "QUIT!")))
+        (selected-field ""))
+    (while (and (not (equal selected-field "QUIT!"))
+                (not (equal selected-field "ALL")))
+      (setq selected-field (ivy-read "Select field(s) to display: " fields))
+      (setq fields (remove (intern selected-field) fields))
+      (append fields-to-display 'selected-field))
+    (message fields-to-display)
+    fields-to-display))
+
+(defun abu/call-coral-service--print-selected-fields (selected-fields result)
+  (dolist (selected-field selected-fields)
+    (message "%s" (alist-get selected-field result))))
+
+;;(defun abu/call-coral-service--get-input-to-value-alist (inputs input-values)
+;; convert list to alist
+ ;; (cl-pairlis inputs input-values))
+
+
+#+end_src
+
+
+#+begin_src emacs-lisp
+(defun abu/get-package-version-by-vs (package vs &optional mv)
+  (interactive "sPackage name: \nsVersion Set name: \nsMajor Version (empty for 1.0): ")
+  (let ((major-version (if (equal "" mv)
+                           "1.0"
+                         mv)))
+    (print (amz-coral-call-rpcv1-midway "https://brazil-metadata-sso.corp.amazon.com/"
+                                        "com.amazon.devtools.bmds.generated"
+                                        "BrazilMetaDataService"
+                                        "getPackageVersionByVersionSet"
+                                        `((packageName . ,package) (majorVersion . ,major-version) (versionSet . ,vs))
+                                        t))))
+#+end_src
+
+#+RESULTS:
+: abu/call-coral-service--print-selected-fields
+
+* Ticketing
+** Emacs org issues mode
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/workplace/emacs/Emacs-org-issues-mode/src/Emacs-org-issues-mode")
+(defun abu/org-issues-hook ()
+  (rename-buffer
+   (format "SIM: %s"
+           (org-issues/issue-title (org-issues-buffer/current-resource)))))
+(add-hook 'org-issues-mode-hook 'abu/org-issues-hook)
+
+(require 'org-issues)
+(abu/leader-keys
+  "O" '(:ignore t :which-key "Org Issues")
+  "Oo" '(org-issues :which-key "Org Issues Transient")
+  "Oc" '(org-issues/create-comment :which-key "Create Comment")
+  "Ob" '(org-issues/browse-current :which-key "Browse")
+  "OB" '(org-issues/copy-url-for-buffer :which-key "Copy Url")
+  "Os" '(org-issues/sprints :which-key "Sprints")
+  "Oe" '(org-issues/edit-current :which-key "Edit Current")
+  "OC" '(org-issues/create-issue :which-key "Create Issue"))
+(org-issues-update/monitor-issues) ;; Sets up a timer to automatically keep your local Issues up-to-date
+#+end_src
+
+* Testing
+
+
+** Viewing reviewing CRs
+#+begin_src emacs-lisp
+;(defun husain--mu4e-show-cr-patch (msg)
+  ;(let* ((path (mu4e-message-field msg :path))
+         ;(patches)
+         ;(buf))
+    ;(message "Loading patches...")
+    ;(setq patches (split-string
+                   ;(shell-command-to-string
+                    ;(format "~/bin/cr-get-patch %s" path)) "\n" t))
+    ;(dolist (p patches)
+      ;(find-file p)
+      ;(delete-other-windows)
+      ;(setq buf (get-buffer-create (file-name-nondirectory p)))
+      ;(with-current-buffer buf
+        ;(read-only-mode 1)))))
+
+;(use-package diffview)
+
+;; add this in mu4e config
+;(add-to-list 'mu4e-view-actions
+         ;'("CR patch view" . husain--mu4e-show-cr-patch) t)
+#+end_src
+
+#+RESULTS:
+: ((capture message . mu4e-action-capture-message) (view in browser . mu4e-action-view-in-browser) (xview in xwidget . mu4e-action-view-in-xwidget) (show this thread . mu4e-action-show-thread) (CR patch view . husain--mu4e-show-cr-patch))
+
+#+begin_src emacs-lisp
+;; (setq test "Uploading EC2APITLALambda...
+
+;;  * 21345678 - Some stuff
+;;  * 21345679 - Some more stuff
+
+;; Uploading TestPackage...
+
+;;  * 2685d84 - warning
+;;  * 2685d84 - logs
+
+;; Created code review of EC2APIThrottlingCore, EC2ThrottlingCLI...
+
+;; https://code.amazon.com/reviews/CR-99168529")
+
+;; (setq cr--separator "Process cr finished")
+;; (setq cr--buffer-name "*cr*")
+
+;; (setq cr--package-name-identifier "Uploading")
+;; (setq cr--crux-link-identifier "https://code.amazon.com/reviews")
+
+;; (setq cr (start-process "cr" cr--buffer-name "echo" test))
+;; (process-status cr)
+
+;; (cl-defstruct code-review
+;;   crux-id
+;;   crux-link
+;;   packages-with-commits)
+
+;; (code-review-crux-link (make-code-review :crux-link "blah" :packages-with-commits '(())))
+
+
+
+;; (setq stuff (with-current-buffer cr--buffer-name
+;;               (set-buffer cr--buffer-name)
+;;               (beginning-of-buffer)
+;;               (let ((code-reviews)
+;;                     (cr-block-point t)
+;;                     (next-cr-block-point 1)
+;;                     (next-package-point 0)
+;;                     (crux-link)
+;;                     (package-name)
+;;                     (package-commits))
+;;                 (while cr-block-point
+;;                   (setq package-commits nil)
+;;                   (setq next-cr-block-point
+;;                         (or
+;;                          (save-excursion
+;;                            (goto-char next-package-point)
+;;                            (search-forward cr--separator nil t))
+;;                          (- next-package-point 1)))
+;;                   (setq cr-block-point (save-excursion
+;;                                          (goto-char next-cr-block-point)
+;;                                          (search-forward cr--separator nil t)))
+;;                   (while (> next-cr-block-point (setq next-package-point
+;;                                                       (or
+;;                                                        (save-excursion
+;;                                                          (goto-char next-package-point)
+;;                                                          (search-forward cr--package-name-identifier nil t))
+;;                                                        (point-max))))
+;;                     (message "package-%s < block-%s" next-package-point next-cr-block-point)
+;;                     (when (not (= next-package-point (point-max)))
+;;                       (setq crux-link (get-crux-link next-package-point next-cr-block-point)
+;;                             package-name (get-package-name next-package-point))
+;;                       (add-to-list 'package-commits (cons package-name (get-package-commits next-package-point)))))
+;;                   (message "CR-BLOCK: %s" cr-block-point)
+;;                   (push (make-code-review :crux-link crux-link :crux-id (get-crux-id crux-link) :packages-with-commits (cons package-name package-commits))
+;;                         code-reviews))
+;;                 code-reviews)))
+
+
+;; (length stuff)
+;; (nth 1 stuff)
+;; (dolist (it stuff)
+;;   (dolist (in (cdr (code-review-packages-with-commits it)))
+;;     (print (car in))))
+
+
+;; (defun get-crux-link (package-point cr-block-point)
+;;   (let ((final-package-in-cr-block package-point)
+;;         (next-package package-point))
+;;     (while (> cr-block-point (or (setq next-package (save-excursion
+;;                                                       (goto-char next-package)
+;;                                                       (search-forward cr--package-name-identifier nil t)))
+;;                                  (+ 1 cr-block-point)))
+;;       (setq final-package-in-cr-block next-package))
+;;     (save-excursion
+;;       (goto-char final-package-in-cr-block)
+;;       (search-forward cr--crux-link-identifier nil t)
+;;       (string-trim (thing-at-point 'line)))))
+
+;; (defun get-crux-id (crux-link)
+;;   (substring crux-link (cl-search "CR" crux-link)))
+
+;; (defun get-package-name (package-point)
+;;   (let ((package-sentence (save-excursion
+;;                             (goto-char package-point)
+;;                             (string-trim (thing-at-point 'line)))))
+;;     (substring package-sentence (+ 1 (cl-search " " package-sentence)) (cl-search "." package-sentence))))
+
+;; (defun get-package-commits (package-point)
+;;   (let ((next-package-point (or (save-excursion
+;;                                   (goto-char package-point)
+;;                                   (search-forward cr--package-name-identifier nil t))
+;;                                 0))
+;;         (next-commit-point package-point)
+;;         (package-commits '()))
+;;     (while (and (< 0 (setq next-commit-point
+;;                            (or
+;;                             (save-excursion
+;;                               (goto-char next-commit-point)
+;;                               (search-forward "* " nil t))
+;;                             -1)))
+;;                 (> next-package-point next-commit-point))
+;;       (push (save-excursion
+;;               (goto-char next-commit-point)
+;;               (string-trim (thing-at-point 'line)))
+;;             package-commits))
+;;     package-commits))
+
+;; (setq thing "Uploading EC2APIThrottlingCore...")
+;; (substring thing (+ 1 (cl-search " " thing)) (cl-search "." thing))
+#+end_src
+
+* Hydras
+** Cut CR helper
+#+begin_src emacs-lisp
+(setq most-recently-cut-cr-command "")
+
+(defun cut-cr-with-most-recent-command (&optional args)
+  (interactive)
+  (message "Creating CR with most recently cut CR's command: %s" most-recently-cut-cr-command)
+  (async-shell-command most-recently-cut-cr-command))
+
+(defun cut-cr (&optional args)
+  (interactive
+   (list (transient-args 'transient-crux-cut-cr)))
+  (setq args-string (mapconcat 'identity args " "))
+  (setq cr-command (format "cr %s" args-string))
+  (setq most-recently-cut-cr-command cr-command)
+  (print args-string)
+  (message "Creating CR with command command: %s" cr-command)
+  (async-shell-command cr-command))
+
+(defun get-branch (&optional args)
+  (interactive
+   (list (transient-args 'transient-crux-cut-cr)))
+  (defvar selected-branch "")
+  (defvar final-operation "")
+  (defvar supported-args '("--parent" "--destination-branch"))
+  (dolist (supported-arg supported-args)
+    (if (member supported-arg args)
+        (progn
+          (setq selected-branch (magit-read-other-branch-or-commit "Find branch or commit"))
+          (setq final-operation supported-arg))))
+  (format "%s %s" final-operation selected-branch))
+
+(member "test" '("test" "another tes"))
+
+(transient-define-argument transient-crux-cut-cr:--*-reviewers ()
+  :description "Reviewers of the form <user> or <type>:<id>[:<count>] (types are: user, posix, ldap, team)"
+  :class 'transient-switches
+  :key "-R"
+  :argument-format "--reviewers=%s"
+  ;:argument "--reviewers="
+  :argument-regexp "*"
+  :choices '("team:EC2 Shield" "team:EC2 Shield,briangrg"))
+
+(transient-define-prefix transient-crux-cut-cr ()
+  "Cut a CR"
+  ["Switches"
+   ("-a" "Includes all modified packages in your workspace" "--all")
+   ("-n" "Includes all modified packages in your workspace" "--new-review")
+   ]
+  ["Common options"
+   ("-i" "Packages and commit ranges to include in the review" "--include=")
+   ("-u" "Updates the given code review rather than making a new one" "--update-review=")
+   ("-p" "Code review the range of REF..HEAD" "--parent=")
+   ("-r" "Code review the range of FROM..TO" "--range=" (lambda (a b c)
+                                                          (message "A: %s\nB: %s\nC: %s" a b c)
+                                                          (let* ((last-10-commits (abu/get-last-10-commits))
+                                                                 (first-commit-id (abu/get-commit-from-commits last-10-commits "Pick first commit: "))
+                                                                 (second-commit-id (abu/get-commit-from-commits (abu/get-commits-after first-commit-id last-10-commits) "Pick second commit: ")))
+                                                            (format "%s:%s" first-commit-id second-commit-id))))
+   ;;("-r" "Code review the range of FROM..TO" "--range=" )
+   ("-d" "Name of branch where changes shall eventually be merged into" "--destination-branch=")
+   (transient-crux-cut-cr:--*-reviewers)
+   ]
+  ["Cut CR"
+   ("n" "Cut CR" cut-cr)
+   ("o" "Cut CR with most recently used arguments" cut-cr-with-most-recent-command)
+   ])
+
+(defun abu/get-last-10-commits ()
+  "Gets the last 10 commits as a list for the current git project."
+  (let* ((last-10-commits-with-message (shell-command-to-string "git log --pretty=oneline -n 10 | cat"))
+         (last-10-commits-list (split-string last-10-commits-with-message "\n")))
+    last-10-commits-list))
+
+(defun abu/get-commit-from-commits (commits pick-message)
+  "Use ivy to obtain a commit id from a list of COMMITS prompting with PICK-MESSAGE."
+  (let* ((picked-commit (ivy-read (format "%s" pick-message) commits))
+         (picked-commit-id (car (split-string picked-commit))))
+    (substring picked-commit-id 0 8)))
+
+(defun abu/get-commits-after (commit-id commits)
+  "Retrieve commits in COMMITS that occur after COMMIT-ID."
+  (setq index nil)
+  (seq-do-indexed (lambda (commit idx)
+                    (print (cl-search commit-id commit))
+                    (when (cl-search commit-id commit)
+                      (setq index idx)))
+                  commits)
+  (subseq commits 0 index))
+
+
+(abu/leader-keys
+  "cC" '(transient-crux-cut-cr :which-key "Cut CRUX CR"))
+#+end_src
+  
